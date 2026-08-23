@@ -29,7 +29,7 @@ export default async function MaterialesPage({
         </p>
 
         <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {CATEGORIES.map((category) => (
+          {CATEGORIES.filter((category) => category.vertical === "educacion").map((category) => (
             <Link
               key={category.slug}
               href={`/materiales?categoria=${encodeURIComponent(category.slug)}`}

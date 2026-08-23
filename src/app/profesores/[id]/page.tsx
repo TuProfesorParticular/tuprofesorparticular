@@ -81,7 +81,9 @@ export default async function TeacherProfilePage({ params, searchParams }: PageP
   const levelsBySubject = new Map<string, string[]>();
   for (const teacherSubject of teacher.subjects) {
     const levels = levelsBySubject.get(teacherSubject.subject.name) ?? [];
-    levels.push(LEVEL_LABELS[teacherSubject.level]);
+    if (teacherSubject.level) {
+      levels.push(LEVEL_LABELS[teacherSubject.level]);
+    }
     levelsBySubject.set(teacherSubject.subject.name, levels);
   }
 
@@ -135,7 +137,8 @@ export default async function TeacherProfilePage({ params, searchParams }: PageP
                   key={subject}
                   className="rounded-full bg-teal-50 px-3 py-1 text-sm font-medium text-teal-700"
                 >
-                  {subject} · {levels.join(", ")}
+                  {subject}
+                  {levels.length > 0 && ` · ${levels.join(", ")}`}
                 </span>
               ))}
             </div>

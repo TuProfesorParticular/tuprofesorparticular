@@ -36,7 +36,11 @@ export default async function EditarPerfilPage() {
     ...new Set(teacherProfile.subjects.map((s) => s.subjectId)),
   ];
   const selectedLevels = [
-    ...new Set(teacherProfile.subjects.map((s) => s.level)),
+    ...new Set(
+      teacherProfile.subjects
+        .map((s) => s.level)
+        .filter((level): level is NonNullable<typeof level> => level !== null),
+    ),
   ];
 
   return (

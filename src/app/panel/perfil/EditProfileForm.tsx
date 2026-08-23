@@ -98,6 +98,10 @@ export default function EditProfileForm({
         <legend className="mb-2 text-sm font-medium text-stone-700">
           Niveles que impartes
         </legend>
+        <p className="mb-2 text-xs text-stone-400">
+          Solo aplica a materias académicas. Si impartes deporte o salud
+          mental, puedes dejarlo sin marcar.
+        </p>
         <div className="flex flex-wrap gap-2">
           {LEVEL_ORDER.map((level) => (
             <label

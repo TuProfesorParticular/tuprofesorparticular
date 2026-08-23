@@ -1,7 +1,8 @@
 import "dotenv/config";
+import type { Vertical } from "@prisma/client";
 import { prisma } from "../src/lib/prisma";
 
-const subjects: { name: string; category: string }[] = [
+const subjects: { name: string; category: string; vertical?: Vertical }[] = [
   // Ciencias (Primaria, ESO y Bachillerato — modalidad Ciencias y Tecnología, LOMLOE)
   { name: "Matemáticas", category: "Ciencias" },
   { name: "Física", category: "Ciencias" },
@@ -80,14 +81,58 @@ const subjects: { name: string; category: string }[] = [
   { name: "Catalán (JQCV / EOI)", category: "Cursos oficiales" },
   { name: "Euskera (EGA / EOI)", category: "Cursos oficiales" },
   { name: "Gallego (CELGA)", category: "Cursos oficiales" },
+
+  // Deportes de Combate
+  { name: "Boxeo", category: "Deportes de Combate", vertical: "deporte" },
+  { name: "Kickboxing", category: "Deportes de Combate", vertical: "deporte" },
+  { name: "Muay Thai", category: "Deportes de Combate", vertical: "deporte" },
+  { name: "Artes Marciales Mixtas (MMA)", category: "Deportes de Combate", vertical: "deporte" },
+  { name: "Judo", category: "Deportes de Combate", vertical: "deporte" },
+  { name: "Karate", category: "Deportes de Combate", vertical: "deporte" },
+  { name: "Defensa Personal", category: "Deportes de Combate", vertical: "deporte" },
+
+  // Deportes de Raqueta y Equipo
+  { name: "Tenis", category: "Deportes de Raqueta y Equipo", vertical: "deporte" },
+  { name: "Pádel", category: "Deportes de Raqueta y Equipo", vertical: "deporte" },
+  { name: "Bádminton", category: "Deportes de Raqueta y Equipo", vertical: "deporte" },
+  { name: "Fútbol", category: "Deportes de Raqueta y Equipo", vertical: "deporte" },
+  { name: "Baloncesto", category: "Deportes de Raqueta y Equipo", vertical: "deporte" },
+  { name: "Voleibol", category: "Deportes de Raqueta y Equipo", vertical: "deporte" },
+
+  // Fitness y Bienestar Físico
+  { name: "Entrenamiento Personal", category: "Fitness y Bienestar Físico", vertical: "deporte" },
+  { name: "Crossfit", category: "Fitness y Bienestar Físico", vertical: "deporte" },
+  { name: "Calistenia", category: "Fitness y Bienestar Físico", vertical: "deporte" },
+  { name: "Musculación", category: "Fitness y Bienestar Físico", vertical: "deporte" },
+  { name: "Natación", category: "Fitness y Bienestar Físico", vertical: "deporte" },
+  { name: "Running y Atletismo", category: "Fitness y Bienestar Físico", vertical: "deporte" },
+  { name: "Yoga", category: "Fitness y Bienestar Físico", vertical: "deporte" },
+  { name: "Pilates", category: "Fitness y Bienestar Físico", vertical: "deporte" },
+  { name: "Ciclismo", category: "Fitness y Bienestar Físico", vertical: "deporte" },
+
+  // Psicología y Terapia
+  { name: "Psicología Clínica", category: "Psicología y Terapia", vertical: "salud_mental" },
+  { name: "Psicología Infantil y Juvenil", category: "Psicología y Terapia", vertical: "salud_mental" },
+  { name: "Terapia de Pareja", category: "Psicología y Terapia", vertical: "salud_mental" },
+  { name: "Terapia Familiar", category: "Psicología y Terapia", vertical: "salud_mental" },
+  { name: "Terapia Cognitivo-Conductual", category: "Psicología y Terapia", vertical: "salud_mental" },
+  { name: "Coaching Personal", category: "Psicología y Terapia", vertical: "salud_mental" },
+  { name: "Mindfulness y Gestión del Estrés", category: "Psicología y Terapia", vertical: "salud_mental" },
+
+  // Psicopedagogía y Aprendizaje
+  { name: "Psicopedagogía", category: "Psicopedagogía y Aprendizaje", vertical: "salud_mental" },
+  { name: "Logopedia", category: "Psicopedagogía y Aprendizaje", vertical: "salud_mental" },
+  { name: "Dificultades del Aprendizaje", category: "Psicopedagogía y Aprendizaje", vertical: "salud_mental" },
+  { name: "Altas Capacidades", category: "Psicopedagogía y Aprendizaje", vertical: "salud_mental" },
 ];
 
 async function main() {
   for (const subject of subjects) {
+    const vertical = subject.vertical ?? "educacion";
     await prisma.subject.upsert({
       where: { name: subject.name },
-      update: { category: subject.category },
-      create: subject,
+      update: { category: subject.category, vertical },
+      create: { name: subject.name, category: subject.category, vertical },
     });
   }
   console.log(`Seed completado: ${subjects.length} materias.`);

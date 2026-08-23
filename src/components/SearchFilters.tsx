@@ -10,7 +10,9 @@ type SearchFiltersProps = {
     modalidad?: string;
     nivel?: string;
     precioMax?: string;
+    ambito?: string;
   };
+  showLevel?: boolean;
 };
 
 const selectClass =
@@ -19,6 +21,7 @@ const selectClass =
 export default function SearchFilters({
   subjects,
   defaultValues,
+  showLevel = true,
 }: SearchFiltersProps) {
   const subjectsByCategory = new Map<string, Subject[]>();
   for (const subject of subjects) {
@@ -28,9 +31,14 @@ export default function SearchFilters({
   }
 
   return (
-    <form className="grid grid-cols-1 gap-3 rounded-xl border border-stone-200 bg-white p-4 shadow-sm sm:grid-cols-5">
+    <form
+      className={`grid grid-cols-1 gap-3 rounded-xl border border-stone-200 bg-white p-4 shadow-sm ${showLevel ? "sm:grid-cols-5" : "sm:grid-cols-4"}`}
+    >
       {defaultValues.categoria && (
         <input type="hidden" name="categoria" value={defaultValues.categoria} />
+      )}
+      {defaultValues.ambito && (
+        <input type="hidden" name="ambito" value={defaultValues.ambito} />
       )}
 
       <select
@@ -71,18 +79,20 @@ export default function SearchFilters({
         ))}
       </select>
 
-      <select
-        name="nivel"
-        defaultValue={defaultValues.nivel ?? ""}
-        className={selectClass}
-      >
-        <option value="">Cualquier nivel</option>
-        {LEVEL_ORDER.map((level) => (
-          <option key={level} value={level}>
-            {LEVEL_LABELS[level]}
-          </option>
-        ))}
-      </select>
+      {showLevel && (
+        <select
+          name="nivel"
+          defaultValue={defaultValues.nivel ?? ""}
+          className={selectClass}
+        >
+          <option value="">Cualquier nivel</option>
+          {LEVEL_ORDER.map((level) => (
+            <option key={level} value={level}>
+              {LEVEL_LABELS[level]}
+            </option>
+          ))}
+        </select>
+      )}
 
       <input
         name="precioMax"
@@ -95,7 +105,7 @@ export default function SearchFilters({
 
       <button
         type="submit"
-        className="col-span-full rounded-lg bg-teal-600 py-2 text-sm font-semibold text-white hover:bg-teal-700 sm:col-span-5"
+        className={`col-span-full rounded-lg bg-teal-600 py-2 text-sm font-semibold text-white hover:bg-teal-700 ${showLevel ? "sm:col-span-5" : "sm:col-span-4"}`}
       >
         Buscar
       </button>

@@ -29,6 +29,14 @@ enum Level {
   adultos
 }
 
+// Ámbito de nivel superior: la web ya no es solo educación — también
+// entrenadores deportivos y profesionales de la salud mental.
+enum Vertical {
+  educacion
+  deporte
+  salud_mental
+}
+
 enum TeacherStatus {
   pending
   approved
@@ -194,15 +202,17 @@ model Booking {
 // Categorías de nivel superior que estructuran la web: Ciencias, Humanidades,
 // Oposiciones, Cursos oficiales (idiomas). Cada Subject pertenece a una.
 model Subject {
-  id       String @id @default(cuid())
-  name     String @unique
+  id       String   @id @default(cuid())
+  name     String   @unique
   category String
+  vertical Vertical @default(educacion)
 
   teacherSubjects TeacherSubject[]
   materials       Material[]
   studentRequests StudentRequest[]
 
   @@index([category])
+  @@index([vertical])
   @@map("subjects")
 }
 
@@ -251,15 +261,19 @@ model Material {
 }
 
 // Tabla puente: un profesor puede impartir varias materias a distintos niveles
+// El nivel educativo solo aplica al ámbito "educacion" — un entrenador
+// deportivo o un psicólogo no tienen "ESO" o "Bachillerato", así que es
+// opcional y ya no puede formar parte de la clave primaria compuesta.
 model TeacherSubject {
+  id               String @id @default(cuid())
   teacherProfileId String
   subjectId        String
-  level            Level
+  level            Level?
 
   teacherProfile TeacherProfile @relation(fields: [teacherProfileId], references: [id], onDelete: Cascade)
   subject        Subject        @relation(fields: [subjectId], references: [id], onDelete: Cascade)
 
-  @@id([teacherProfileId, subjectId, level])
+  @@unique([teacherProfileId, subjectId, level])
   @@map("teacher_subjects")
 }
 

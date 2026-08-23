@@ -81,16 +81,24 @@ export async function updateTeacherProfile(
     prisma.teacherSubject.deleteMany({
       where: { teacherProfileId: teacherProfile.id },
     }),
-    ...(subjectIds.length > 0 && levels.length > 0
+    ...(subjectIds.length > 0
       ? [
           prisma.teacherSubject.createMany({
-            data: subjectIds.flatMap((subjectId) =>
-              levels.map((level) => ({
-                teacherProfileId: teacherProfile.id,
-                subjectId,
-                level,
-              })),
-            ),
+            data:
+              levels.length > 0
+                ? subjectIds.flatMap((subjectId) =>
+                    levels.map((level) => ({
+                      teacherProfileId: teacherProfile.id,
+                      subjectId,
+                      level,
+                    })),
+                  )
+                : // Materias de deporte / salud mental no tienen nivel educativo.
+                  subjectIds.map((subjectId) => ({
+                    teacherProfileId: teacherProfile.id,
+                    subjectId,
+                    level: null,
+                  })),
           }),
         ]
       : []),

@@ -1,7 +1,13 @@
 import Link from "next/link";
-import type { Modality, Level } from "@prisma/client";
+import type { Modality, Level, Vertical } from "@prisma/client";
 import { getAllSubjects, getTeacherSearchResults } from "@/lib/teachers";
-import { CATEGORIES, MATERIALS_CATEGORY, UNIVERSITY_SECTION } from "@/lib/constants";
+import {
+  CATEGORIES,
+  MATERIALS_CATEGORY,
+  UNIVERSITY_SECTION,
+  VERTICALS,
+  DEFAULT_VERTICAL,
+} from "@/lib/constants";
 import SearchFilters from "@/components/SearchFilters";
 import TeacherCard from "@/components/TeacherCard";
 import PricingSection from "@/components/PricingSection";
@@ -16,6 +22,7 @@ type SearchParams = {
   modalidad?: string;
   nivel?: string;
   precioMax?: string;
+  ambito?: string;
 };
 
 const CATEGORY_ICONS: Record<string, string> = {
@@ -25,6 +32,11 @@ const CATEGORY_ICONS: Record<string, string> = {
   Oposiciones: "🏛️",
   "Cursos oficiales": "🌍",
   Universidad: "🎓",
+  "Deportes de Combate": "🥊",
+  "Deportes de Raqueta y Equipo": "🎾",
+  "Fitness y Bienestar Físico": "💪",
+  "Psicología y Terapia": "🧠",
+  "Psicopedagogía y Aprendizaje": "📘",
 };
 
 export default async function HomePage({
@@ -33,6 +45,10 @@ export default async function HomePage({
   searchParams: Promise<SearchParams>;
 }) {
   const params = await searchParams;
+
+  const activeVertical: Vertical = VERTICALS.some((v) => v.slug === params.ambito)
+    ? (params.ambito as Vertical)
+    : DEFAULT_VERTICAL;
 
   const hasActiveSearch = Boolean(
     params.materia ||
@@ -43,12 +59,17 @@ export default async function HomePage({
       params.precioMax,
   );
 
+  const categoriesForVertical = CATEGORIES.filter(
+    (c) => c.vertical === activeVertical,
+  );
+
   const activeCategory = CATEGORIES.find(
     (c) => c.slug.toLowerCase() === params.categoria?.toLowerCase(),
   );
-  const isUniversityFilter = !activeCategory && params.nivel === "universidad";
+  const isUniversityFilter =
+    !activeCategory && activeVertical === "educacion" && params.nivel === "universidad";
 
-  const [subjects, teachers] = await Promise.all([
+  const [allSubjects, teachers] = await Promise.all([
     getAllSubjects(),
     hasActiveSearch
       ? getTeacherSearchResults({
@@ -62,6 +83,30 @@ export default async function HomePage({
       : Promise.resolve(null),
   ]);
 
+  const subjects = allSubjects.filter((s) => s.vertical === activeVertical);
+
+  const HERO_COPY: Record<Vertical, { title: string; subtitle: string; placeholder: string }> = {
+    educacion: {
+      title: "Encuentra tu profesor particular ideal.",
+      subtitle:
+        "Busca por materia, ubicación o modalidad y contacta directamente. Sin intermediarios innecesarios, sin letra pequeña.",
+      placeholder: "¿Qué quieres aprender? (ej. Matemáticas)",
+    },
+    deporte: {
+      title: "Encuentra tu entrenador ideal.",
+      subtitle:
+        "Busca por disciplina, ubicación o modalidad y contacta directamente con quien va a entrenarte.",
+      placeholder: "¿Qué deporte quieres entrenar? (ej. Boxeo)",
+    },
+    salud_mental: {
+      title: "Encuentra tu profesional ideal.",
+      subtitle:
+        "Busca psicólogos, psicopedagogos y profesionales del bienestar emocional y contacta directamente.",
+      placeholder: "¿Qué necesitas? (ej. Psicología Clínica)",
+    },
+  };
+  const hero = HERO_COPY[activeVertical];
+
   return (
     <>
       <section className="relative overflow-hidden border-b border-stone-200 bg-white">
@@ -72,24 +117,42 @@ export default async function HomePage({
         />
         <div className="relative mx-auto max-w-6xl px-4 py-16 text-center sm:py-20">
           <h1 className="text-4xl font-extrabold tracking-tight text-stone-900 sm:text-6xl">
-            Encuentra tu profesor particular{" "}
+            {hero.title.replace(" ideal.", "")}{" "}
             <span className="text-teal-600">ideal.</span>
           </h1>
           <p className="mx-auto mt-4 max-w-xl text-lg text-stone-500">
-            Busca por materia, ubicación o modalidad y contacta directamente.
-            Sin intermediarios innecesarios, sin letra pequeña.
+            {hero.subtitle}
           </p>
+
+          <div className="mx-auto mt-6 flex max-w-xl flex-wrap items-center justify-center gap-2">
+            {VERTICALS.map((v) => (
+              <Link
+                key={v.slug}
+                href={v.slug === DEFAULT_VERTICAL ? "/" : `/?ambito=${v.slug}`}
+                className={`rounded-full border px-4 py-1.5 text-sm font-medium transition ${
+                  activeVertical === v.slug
+                    ? "border-teal-600 bg-teal-600 text-white"
+                    : "border-stone-300 bg-white text-stone-600 hover:border-teal-400"
+                }`}
+              >
+                {v.icon} {v.label}
+              </Link>
+            ))}
+          </div>
 
           <form
             action="/"
             method="get"
-            className="mx-auto mt-8 flex max-w-xl flex-col gap-2 rounded-2xl border border-stone-200 bg-white/90 p-2 shadow-lg backdrop-blur sm:flex-row"
+            className="mx-auto mt-6 flex max-w-xl flex-col gap-2 rounded-2xl border border-stone-200 bg-white/90 p-2 shadow-lg backdrop-blur sm:flex-row"
           >
+            {activeVertical !== DEFAULT_VERTICAL && (
+              <input type="hidden" name="ambito" value={activeVertical} />
+            )}
             <input
               type="text"
               name="materia"
               list="hero-subjects-list"
-              placeholder="¿Qué quieres aprender? (ej. Matemáticas)"
+              placeholder={hero.placeholder}
               className="flex-1 rounded-lg border-0 px-3 py-2.5 text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-teal-500"
             />
             <datalist id="hero-subjects-list">
@@ -115,10 +178,10 @@ export default async function HomePage({
 
       <main className="mx-auto max-w-6xl px-4 py-10">
         <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {CATEGORIES.map((category) => (
+          {categoriesForVertical.map((category) => (
             <Link
               key={category.slug}
-              href={`/?categoria=${encodeURIComponent(category.slug)}`}
+              href={`/?categoria=${encodeURIComponent(category.slug)}${activeVertical !== DEFAULT_VERTICAL ? `&ambito=${activeVertical}` : ""}`}
               className={`rounded-2xl border p-5 transition hover:-translate-y-1 hover:shadow-lg ${category.colors.bg} ${category.colors.border} ${category.colors.ring}`}
             >
               <span className="text-2xl">{CATEGORY_ICONS[category.slug]}</span>
@@ -129,31 +192,35 @@ export default async function HomePage({
             </Link>
           ))}
 
-          <Link
-            href="/?nivel=universidad"
-            className={`rounded-2xl border p-5 transition hover:-translate-y-1 hover:shadow-lg ${UNIVERSITY_SECTION.colors.bg} ${UNIVERSITY_SECTION.colors.border} ${UNIVERSITY_SECTION.colors.ring}`}
-          >
-            <span className="text-2xl">{CATEGORY_ICONS.Universidad}</span>
-            <h2 className={`mt-2 text-lg font-bold ${UNIVERSITY_SECTION.colors.text}`}>
-              {UNIVERSITY_SECTION.label}
-            </h2>
-            <p className="mt-1 text-xs text-stone-600">
-              {UNIVERSITY_SECTION.description}
-            </p>
-          </Link>
+          {activeVertical === "educacion" && (
+            <>
+              <Link
+                href="/?nivel=universidad"
+                className={`rounded-2xl border p-5 transition hover:-translate-y-1 hover:shadow-lg ${UNIVERSITY_SECTION.colors.bg} ${UNIVERSITY_SECTION.colors.border} ${UNIVERSITY_SECTION.colors.ring}`}
+              >
+                <span className="text-2xl">{CATEGORY_ICONS.Universidad}</span>
+                <h2 className={`mt-2 text-lg font-bold ${UNIVERSITY_SECTION.colors.text}`}>
+                  {UNIVERSITY_SECTION.label}
+                </h2>
+                <p className="mt-1 text-xs text-stone-600">
+                  {UNIVERSITY_SECTION.description}
+                </p>
+              </Link>
 
-          <Link
-            href="/materiales"
-            className={`rounded-2xl border p-5 transition hover:-translate-y-1 hover:shadow-lg ${MATERIALS_CATEGORY.colors.bg} ${MATERIALS_CATEGORY.colors.border} ${MATERIALS_CATEGORY.colors.ring}`}
-          >
-            <span className="text-2xl">📁</span>
-            <h2 className={`mt-2 text-lg font-bold ${MATERIALS_CATEGORY.colors.text}`}>
-              {MATERIALS_CATEGORY.label}
-            </h2>
-            <p className="mt-1 text-xs text-stone-600">
-              {MATERIALS_CATEGORY.description}
-            </p>
-          </Link>
+              <Link
+                href="/materiales"
+                className={`rounded-2xl border p-5 transition hover:-translate-y-1 hover:shadow-lg ${MATERIALS_CATEGORY.colors.bg} ${MATERIALS_CATEGORY.colors.border} ${MATERIALS_CATEGORY.colors.ring}`}
+              >
+                <span className="text-2xl">📁</span>
+                <h2 className={`mt-2 text-lg font-bold ${MATERIALS_CATEGORY.colors.text}`}>
+                  {MATERIALS_CATEGORY.label}
+                </h2>
+                <p className="mt-1 text-xs text-stone-600">
+                  {MATERIALS_CATEGORY.description}
+                </p>
+              </Link>
+            </>
+          )}
         </section>
 
         <FeaturedTeachers />
@@ -161,11 +228,18 @@ export default async function HomePage({
         {hasActiveSearch && (
           <>
             <section className="mt-10">
-              <Link href="/" className="text-sm text-teal-600 hover:underline">
+              <Link
+                href={activeVertical !== DEFAULT_VERTICAL ? `/?ambito=${activeVertical}` : "/"}
+                className="text-sm text-teal-600 hover:underline"
+              >
                 ← Todas las categorías
               </Link>
               <div className="mt-3">
-                <SearchFilters subjects={subjects} defaultValues={params} />
+                <SearchFilters
+                  subjects={subjects}
+                  defaultValues={params}
+                  showLevel={activeVertical === "educacion"}
+                />
               </div>
             </section>
 

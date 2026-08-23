@@ -1,4 +1,36 @@
-import type { Level, MaterialCourse, Modality } from "@prisma/client";
+import type { Level, MaterialCourse, Modality, Vertical } from "@prisma/client";
+
+// Ámbitos de nivel superior de la web: educación (el original), deporte
+// (entrenadores) y salud mental (psicólogos, psicopedagogos...).
+export type VerticalSection = {
+  slug: Vertical;
+  label: string;
+  icon: string;
+  description: string;
+};
+
+export const VERTICALS: VerticalSection[] = [
+  {
+    slug: "educacion",
+    label: "Educación",
+    icon: "🎓",
+    description: "Profesores particulares para cualquier etapa educativa.",
+  },
+  {
+    slug: "deporte",
+    label: "Deporte",
+    icon: "🏋️",
+    description: "Entrenadores personales y de cualquier disciplina deportiva.",
+  },
+  {
+    slug: "salud_mental",
+    label: "Salud Mental",
+    icon: "🧠",
+    description: "Psicólogos, psicopedagogos y profesionales del bienestar emocional.",
+  },
+];
+
+export const DEFAULT_VERTICAL: Vertical = "educacion";
 
 export const MODALITY_LABELS: Record<Modality, string> = {
   in_person: "Presencial a domicilio",
@@ -28,6 +60,7 @@ export type CategorySection = {
   slug: string;
   label: string;
   description: string;
+  vertical: Vertical;
   colors: {
     bg: string;
     border: string;
@@ -41,6 +74,7 @@ export const CATEGORIES: CategorySection[] = [
     slug: "Ciencias",
     label: "Ciencias",
     description: "Matemáticas, física, química, biología, dibujo técnico...",
+    vertical: "educacion",
     colors: {
       bg: "bg-sky-50",
       border: "border-sky-200",
@@ -52,6 +86,7 @@ export const CATEGORIES: CategorySection[] = [
     slug: "Humanidades",
     label: "Humanidades",
     description: "Filosofía, lengua, latín, griego, idiomas...",
+    vertical: "educacion",
     colors: {
       bg: "bg-violet-50",
       border: "border-violet-200",
@@ -63,6 +98,7 @@ export const CATEGORIES: CategorySection[] = [
     slug: "Ciencias Sociales",
     label: "Ciencias Sociales",
     description: "Historia, geografía, economía, matemáticas sociales...",
+    vertical: "educacion",
     colors: {
       bg: "bg-orange-50",
       border: "border-orange-200",
@@ -74,6 +110,7 @@ export const CATEGORIES: CategorySection[] = [
     slug: "Oposiciones",
     label: "Oposiciones",
     description: "Preparación de las oposiciones más demandadas.",
+    vertical: "educacion",
     colors: {
       bg: "bg-emerald-50",
       border: "border-emerald-200",
@@ -85,11 +122,76 @@ export const CATEGORIES: CategorySection[] = [
     slug: "Cursos oficiales",
     label: "Cursos oficiales",
     description: "Preparación de certificaciones oficiales de cualquier idioma.",
+    vertical: "educacion",
     colors: {
       bg: "bg-amber-50",
       border: "border-amber-200",
       text: "text-amber-700",
       ring: "hover:border-amber-400",
+    },
+  },
+
+  // Deporte
+  {
+    slug: "Deportes de Combate",
+    label: "Deportes de Combate",
+    description: "Boxeo, kickboxing, artes marciales, defensa personal...",
+    vertical: "deporte",
+    colors: {
+      bg: "bg-red-50",
+      border: "border-red-200",
+      text: "text-red-700",
+      ring: "hover:border-red-400",
+    },
+  },
+  {
+    slug: "Deportes de Raqueta y Equipo",
+    label: "Deportes de Raqueta y Equipo",
+    description: "Tenis, pádel, fútbol, baloncesto, voleibol...",
+    vertical: "deporte",
+    colors: {
+      bg: "bg-lime-50",
+      border: "border-lime-200",
+      text: "text-lime-700",
+      ring: "hover:border-lime-400",
+    },
+  },
+  {
+    slug: "Fitness y Bienestar Físico",
+    label: "Fitness y Bienestar Físico",
+    description: "Entrenamiento personal, crossfit, natación, yoga, running...",
+    vertical: "deporte",
+    colors: {
+      bg: "bg-cyan-50",
+      border: "border-cyan-200",
+      text: "text-cyan-700",
+      ring: "hover:border-cyan-400",
+    },
+  },
+
+  // Salud Mental
+  {
+    slug: "Psicología y Terapia",
+    label: "Psicología y Terapia",
+    description: "Psicología clínica, infantil, terapia de pareja y familiar...",
+    vertical: "salud_mental",
+    colors: {
+      bg: "bg-fuchsia-50",
+      border: "border-fuchsia-200",
+      text: "text-fuchsia-700",
+      ring: "hover:border-fuchsia-400",
+    },
+  },
+  {
+    slug: "Psicopedagogía y Aprendizaje",
+    label: "Psicopedagogía y Aprendizaje",
+    description: "Psicopedagogía, logopedia, dificultades del aprendizaje...",
+    vertical: "salud_mental",
+    colors: {
+      bg: "bg-teal-50",
+      border: "border-teal-200",
+      text: "text-teal-700",
+      ring: "hover:border-teal-400",
     },
   },
 ];
@@ -98,6 +200,7 @@ export const MATERIALS_CATEGORY: CategorySection = {
   slug: "Materiales",
   label: "Materiales",
   description: "Apuntes, ejercicios y recursos que comparten los profesores.",
+  vertical: "educacion",
   colors: {
     bg: "bg-rose-50",
     border: "border-rose-200",
@@ -112,6 +215,7 @@ export const UNIVERSITY_SECTION: CategorySection = {
   slug: "Universidad",
   label: "Universidad",
   description: "Profesores para cualquier materia a nivel universitario.",
+  vertical: "educacion",
   colors: {
     bg: "bg-indigo-50",
     border: "border-indigo-200",
