@@ -116,7 +116,7 @@ export default async function HomePage({
           aria-hidden
           className={`pointer-events-none absolute -top-24 left-1/2 h-72 w-[36rem] -translate-x-1/2 rounded-full blur-3xl ${theme.blob}`}
         />
-        <div className="relative mx-auto max-w-6xl px-4 py-16 text-center sm:py-20">
+        <div className="relative mx-auto max-w-6xl px-4 py-12 text-center sm:py-16">
           <h1 className="text-4xl font-extrabold tracking-tight text-stone-900 sm:text-6xl">
             {hero.title.replace(" ideal.", "")}{" "}
             <span className={theme.accentText}>ideal.</span>

@@ -18,7 +18,7 @@ function PhotoSlot({ photos }: { photos: HeroPhoto[] }) {
   }, [photos.length]);
 
   return (
-    <div className="relative aspect-[4/5] overflow-hidden rounded-2xl shadow-md">
+    <div className="relative aspect-[4/3] overflow-hidden rounded-2xl shadow-md">
       {photos.map((photo, i) => (
         // eslint-disable-next-line @next/next/no-img-element
         <img
@@ -42,7 +42,7 @@ export default function HeroPhotoStrip({ photos }: { photos: HeroPhoto[] }) {
   );
 
   return (
-    <div className="mx-auto mt-8 grid max-w-3xl grid-cols-2 gap-3 sm:grid-cols-4">
+    <div className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-4">
       {slots.map((slotPhotos, i) => (
         <PhotoSlot key={i} photos={slotPhotos} />
       ))}
