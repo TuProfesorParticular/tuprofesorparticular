@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { generateToken } from "@/lib/tokens";
 import { sendVerificationEmail } from "@/lib/mailer";
+import { FOUNDER_LIMIT, addFounderTrialMonths } from "@/lib/plans";
 
 const registerSchema = z.object({
   name: z.string().min(2, "Introduce tu nombre completo"),
@@ -44,6 +45,14 @@ export async function registerUser(
 
   const passwordHash = await bcrypt.hash(password, 10);
 
+  let isFounder = false;
+  if (role === "teacher") {
+    const founderCount = await prisma.teacherProfile.count({
+      where: { isFounder: true },
+    });
+    isFounder = founderCount < FOUNDER_LIMIT;
+  }
+
   await prisma.user.create({
     data: {
       name,
@@ -57,6 +66,13 @@ export async function registerUser(
                 pricePerHour: 0,
                 modality: "online",
                 status: "pending",
+                ...(isFounder
+                  ? {
+                      isFounder: true,
+                      plan: "pro",
+                      founderProUntil: addFounderTrialMonths(new Date()),
+                    }
+                  : {}),
               },
             },
           }

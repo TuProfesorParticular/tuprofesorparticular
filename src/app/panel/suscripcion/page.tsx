@@ -5,9 +5,13 @@ import { getMonthlyMaterialCount } from "@/lib/materials";
 import {
   PLANS,
   getPlan,
+  getBasePrice,
   getDiscountedPrice,
+  isInFounderFreeTrial,
+  FOUNDER_PRICES,
   MATERIAL_DISCOUNT_PER_UPLOAD,
 } from "@/lib/plans";
+import { syncFounderExpiry } from "@/lib/founders";
 import { startSubscriptionCheckout, openBillingPortal } from "./actions";
 
 export const metadata: Metadata = {
@@ -22,14 +26,22 @@ export default async function SuscripcionPage({
   const session = await requireRole("teacher");
   const { motivo } = await searchParams;
 
-  const teacherProfile = await prisma.teacherProfile.findUniqueOrThrow({
+  const rawTeacherProfile = await prisma.teacherProfile.findUniqueOrThrow({
     where: { userId: session.user.id },
   });
+  const teacherProfile = await syncFounderExpiry(rawTeacherProfile);
 
   const [currentPlan, materialsThisMonth] = await Promise.all([
     getPlan(teacherProfile.plan),
     getMonthlyMaterialCount(teacherProfile.id),
   ]);
+
+  const inFreeTrial = isInFounderFreeTrial(teacherProfile);
+  const founderUntilLabel = teacherProfile.founderProUntil
+    ? new Intl.DateTimeFormat("es-ES", { day: "2-digit", month: "long", year: "numeric" }).format(
+        teacherProfile.founderProUntil,
+      )
+    : null;
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-10">
@@ -43,6 +55,15 @@ export default async function SuscripcionPage({
             </span>
           )}
       </p>
+
+      {teacherProfile.isFounder && (
+        <p className="mt-3 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          🎉 Eres profesor fundador (uno de los 100 primeros).{" "}
+          {inFreeTrial
+            ? `Tu plan Pro es gratis hasta el ${founderUntilLabel}. Después, tu precio de fundador se queda fijo para siempre: ${FOUNDER_PRICES.pro}€/mes en Pro o ${FOUNDER_PRICES.premium}€/mes en Premium.`
+            : `Tienes precio de fundador para siempre: ${FOUNDER_PRICES.pro}€/mes en Pro o ${FOUNDER_PRICES.premium}€/mes en Premium, en vez del precio normal.`}
+        </p>
+      )}
 
       {motivo === "contactar-alumnos" && (
         <p className="mt-3 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-800">
@@ -89,9 +110,12 @@ export default async function SuscripcionPage({
       <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-3">
         {PLANS.map((plan) => {
           const isCurrent = plan.id === teacherProfile.plan;
+          const basePrice = getBasePrice(plan.id, teacherProfile);
+          const isFounderPrice = basePrice < plan.price;
+          const freeAsFounderTrial = plan.id === "pro" && inFreeTrial;
           const discountedPrice =
-            plan.price > 0 ? getDiscountedPrice(plan.price, materialsThisMonth) : 0;
-          const hasDiscount = discountedPrice < plan.price;
+            basePrice > 0 ? getDiscountedPrice(basePrice, materialsThisMonth) : 0;
+          const hasMaterialDiscount = discountedPrice < basePrice;
 
           return (
             <div
@@ -105,24 +129,32 @@ export default async function SuscripcionPage({
               <h2 className="text-lg font-bold text-stone-900">{plan.name}</h2>
               <p className="mt-1 text-sm text-stone-500">{plan.description}</p>
               <div className="mt-4">
-                {hasDiscount && (
+                {(isFounderPrice || hasMaterialDiscount) && (
                   <p className="text-sm text-stone-400 line-through">
                     {plan.price}€/mes
                   </p>
                 )}
                 <p className="text-3xl font-bold text-stone-900">
-                  {plan.price === 0
+                  {freeAsFounderTrial || discountedPrice === 0
                     ? "Gratis"
-                    : discountedPrice === 0
-                      ? "Gratis"
-                      : `${discountedPrice}€`}
-                  {plan.price > 0 && discountedPrice > 0 && (
+                    : `${discountedPrice}€`}
+                  {!freeAsFounderTrial && discountedPrice > 0 && (
                     <span className="text-sm font-normal text-stone-400">/mes</span>
                   )}
                 </p>
-                {hasDiscount && (
+                {freeAsFounderTrial && (
+                  <p className="text-xs font-medium text-amber-600">
+                    Gratis hasta el {founderUntilLabel} (fundador)
+                  </p>
+                )}
+                {!freeAsFounderTrial && isFounderPrice && (
+                  <p className="text-xs font-medium text-amber-600">
+                    Precio de fundador para siempre
+                  </p>
+                )}
+                {hasMaterialDiscount && (
                   <p className="text-xs font-medium text-rose-600">
-                    Precio con tu descuento por materiales
+                    {isFounderPrice ? "+ " : ""}Descuento por materiales
                   </p>
                 )}
               </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { MATERIAL_DISCOUNT_PER_UPLOAD } from "@/lib/plans";
+import { MATERIAL_DISCOUNT_PER_UPLOAD, FOUNDER_LIMIT, FOUNDER_PRICES } from "@/lib/plans";
 import { registerUser, type RegisterState } from "./actions";
 
 const initialState: RegisterState = {};
@@ -45,13 +45,22 @@ export default function RegisterForm() {
         </div>
 
         {role === "teacher" && (
-          <p className="mt-3 rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-700">
-            💡 Si compartes materiales cada mes en tu sección de{" "}
-            <span className="font-medium">Materiales</span>, tus planes Pro y
-            Premium se abaratan {MATERIAL_DISCOUNT_PER_UPLOAD}€ por cada
-            material que subas ese mes. Es un descuento mes a mes: si un mes
-            no subes nada, la cuota de ese mes vuelve al precio original.
-          </p>
+          <>
+            <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              🎉 Los {FOUNDER_LIMIT} primeros profesores que se registren
+              obtienen el plan Pro <span className="font-medium">gratis</span>{" "}
+              los 3 primeros meses. Después, precio de fundador para siempre:{" "}
+              {FOUNDER_PRICES.pro}€/mes en Pro o {FOUNDER_PRICES.premium}
+              €/mes en Premium.
+            </p>
+            <p className="mt-2 rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-700">
+              💡 Si compartes materiales cada mes en tu sección de{" "}
+              <span className="font-medium">Materiales</span>, tus planes Pro
+              y Premium se abaratan {MATERIAL_DISCOUNT_PER_UPLOAD}€ por cada
+              material que subas ese mes. Es un descuento mes a mes: si un mes
+              no subes nada, la cuota de ese mes vuelve al precio original.
+            </p>
+          </>
         )}
       </fieldset>
 

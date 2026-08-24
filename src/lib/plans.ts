@@ -88,3 +88,47 @@ export const PLAN_PRIORITY: Record<TeacherPlan, number> = {
   pro: 1,
   free: 0,
 };
+
+// Programa "profesor fundador": a los 100 primeros profesores que se
+// registran se les regala el plan Pro los 3 primeros meses. Si siguen
+// activos (o suben a Premium) después, se quedan con un precio de
+// fundador fijo para siempre, en vez de volver al precio normal.
+export const FOUNDER_LIMIT = 100;
+export const FOUNDER_TRIAL_MONTHS = 3;
+export const FOUNDER_PRICES: Record<"pro" | "premium", number> = {
+  pro: 4.99,
+  premium: 8.99,
+};
+
+export function addFounderTrialMonths(from: Date): Date {
+  const until = new Date(from);
+  until.setMonth(until.getMonth() + FOUNDER_TRIAL_MONTHS);
+  return until;
+}
+
+// Precio base (antes del descuento por materiales) para un plan concreto,
+// teniendo en cuenta si el profesor es fundador.
+export function getBasePrice(
+  planId: TeacherPlan,
+  teacherProfile: { isFounder: boolean },
+): number {
+  if (teacherProfile.isFounder && (planId === "pro" || planId === "premium")) {
+    return FOUNDER_PRICES[planId];
+  }
+  return getPlan(planId).price;
+}
+
+// Un fundador sigue en su ventana de Pro gratis si aún no ha pasado
+// founderProUntil y todavía no tiene una suscripción de pago activa.
+export function isInFounderFreeTrial(teacherProfile: {
+  isFounder: boolean;
+  founderProUntil: Date | null;
+  stripeSubscriptionId: string | null;
+}): boolean {
+  return Boolean(
+    teacherProfile.isFounder &&
+      teacherProfile.founderProUntil &&
+      teacherProfile.founderProUntil.getTime() > Date.now() &&
+      !teacherProfile.stripeSubscriptionId,
+  );
+}

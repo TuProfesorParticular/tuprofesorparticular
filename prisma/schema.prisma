@@ -132,6 +132,12 @@ model TeacherProfile {
   stripeSubscriptionId String?     @unique
   subscriptionStatus   String?
 
+  // Programa "profesor fundador" (los 100 primeros): 3 meses de Pro gratis y
+  // después precio de fundador fijo para siempre (ver FOUNDER_PRICES).
+  isFounder          Boolean   @default(false)
+  founderProUntil    DateTime?
+  founderLockedPrice Decimal?  @db.Decimal(10, 2)
+
   // Cobro de la primera clase — Stripe Connect (cuenta del profesor)
   stripeConnectAccountId String? @unique
   stripeConnectOnboarded Boolean @default(false)

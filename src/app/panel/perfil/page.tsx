@@ -3,6 +3,7 @@ import Link from "next/link";
 import { requireRole } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { getAllSubjects } from "@/lib/teachers";
+import { syncFounderExpiry } from "@/lib/founders";
 import EditProfileForm from "./EditProfileForm";
 
 export const metadata: Metadata = {
@@ -24,13 +25,15 @@ const STATUS_STYLES = {
 export default async function EditarPerfilPage() {
   const session = await requireRole("teacher");
 
-  const [teacherProfile, allSubjects] = await Promise.all([
+  const [rawTeacherProfile, allSubjects] = await Promise.all([
     prisma.teacherProfile.findUniqueOrThrow({
       where: { userId: session.user.id },
       include: { subjects: true, availability: true },
     }),
     getAllSubjects(),
   ]);
+  await syncFounderExpiry(rawTeacherProfile);
+  const teacherProfile = rawTeacherProfile;
 
   const selectedSubjectIds = [
     ...new Set(teacherProfile.subjects.map((s) => s.subjectId)),

@@ -3,6 +3,7 @@ import type Stripe from "stripe";
 import { stripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
 import type { TeacherPlan } from "@prisma/client";
+import { FOUNDER_PRICES } from "@/lib/plans";
 
 export async function POST(request: Request) {
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -49,6 +50,9 @@ export async function POST(request: Request) {
         const teacherProfileId = session.metadata?.teacherProfileId;
         const plan = session.metadata?.plan as TeacherPlan | undefined;
         if (teacherProfileId && plan) {
+          const teacherProfile = await prisma.teacherProfile.findUnique({
+            where: { id: teacherProfileId },
+          });
           await prisma.teacherProfile.update({
             where: { id: teacherProfileId },
             data: {
@@ -58,6 +62,11 @@ export async function POST(request: Request) {
                   ? session.subscription
                   : session.subscription?.id,
               subscriptionStatus: "active",
+              // Un fundador que empieza a pagar deja fijado su precio de
+              // fundador para siempre, sin depender de la ventana gratis.
+              ...(teacherProfile?.isFounder && (plan === "pro" || plan === "premium")
+                ? { founderLockedPrice: FOUNDER_PRICES[plan] }
+                : {}),
             },
           });
         }

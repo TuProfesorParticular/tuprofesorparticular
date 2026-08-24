@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { requireRole } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { requireStripe } from "@/lib/stripe";
-import { getPlan, getDiscountedPrice } from "@/lib/plans";
+import { getPlan, getBasePrice, getDiscountedPrice, isInFounderFreeTrial } from "@/lib/plans";
 import { getMonthlyMaterialCount } from "@/lib/materials";
 
 const APP_URL = process.env.APP_URL || "http://localhost:3000";
@@ -36,8 +36,16 @@ export async function startSubscriptionCheckout(formData: FormData) {
   }
 
   const plan = getPlan(planId);
+  const basePrice = getBasePrice(planId, teacherProfile);
   const materialsThisMonth = await getMonthlyMaterialCount(teacherProfile.id);
-  const price = getDiscountedPrice(plan.price, materialsThisMonth);
+  const price = getDiscountedPrice(basePrice, materialsThisMonth);
+
+  // Un fundador que todavía está en su ventana de Pro gratis y sube de
+  // plan no debe pagar nada hasta que esa ventana termine.
+  const trialEnd =
+    isInFounderFreeTrial(teacherProfile) && teacherProfile.founderProUntil
+      ? Math.floor(teacherProfile.founderProUntil.getTime() / 1000)
+      : undefined;
 
   const checkoutSession = await stripe.checkout.sessions.create({
     mode: "subscription",
@@ -60,6 +68,7 @@ export async function startSubscriptionCheckout(formData: FormData) {
         quantity: 1,
       },
     ],
+    ...(trialEnd ? { subscription_data: { trial_end: trialEnd } } : {}),
     success_url: `${APP_URL}/panel/suscripcion?success=1`,
     cancel_url: `${APP_URL}/panel/suscripcion?canceled=1`,
     metadata: { teacherProfileId: teacherProfile.id, plan: planId },
