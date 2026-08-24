@@ -13,7 +13,7 @@ export default async function FeaturedTeachers() {
         Los mejor valorados de la plataforma. La selección se renueva cada
         pocas horas.
       </p>
-      <div className="mx-auto mt-4 grid max-w-2xl grid-cols-1 gap-4">
+      <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
         {teachers.map((teacher) => (
           <TeacherCard key={teacher.id} teacher={teacher} />
         ))}

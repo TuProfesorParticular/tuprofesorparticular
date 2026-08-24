@@ -3,15 +3,10 @@
 import { useEffect, useState } from "react";
 import type { HeroPhoto } from "@/lib/pexels";
 
-const INTERVAL_MS = 5000;
+const INTERVAL_MS = 4000;
+const SLOT_COUNT = 4;
 
-export default function HeroPhotoCarousel({
-  photos,
-  heroWash,
-}: {
-  photos: HeroPhoto[];
-  heroWash: string;
-}) {
+function PhotoSlot({ photos }: { photos: HeroPhoto[] }) {
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
@@ -23,7 +18,7 @@ export default function HeroPhotoCarousel({
   }, [photos.length]);
 
   return (
-    <div aria-hidden className="absolute inset-0 overflow-hidden">
+    <div className="relative aspect-[4/5] overflow-hidden rounded-2xl shadow-md">
       {photos.map((photo, i) => (
         // eslint-disable-next-line @next/next/no-img-element
         <img
@@ -31,11 +26,26 @@ export default function HeroPhotoCarousel({
           src={photo.url}
           alt={photo.alt}
           className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ${
-            i === index ? "opacity-45" : "opacity-0"
+            i === index ? "opacity-100" : "opacity-0"
           }`}
         />
       ))}
-      <div className={`absolute inset-0 bg-gradient-to-b ${heroWash}`} />
+    </div>
+  );
+}
+
+export default function HeroPhotoStrip({ photos }: { photos: HeroPhoto[] }) {
+  if (photos.length === 0) return null;
+
+  const slots = Array.from({ length: Math.min(SLOT_COUNT, photos.length) }, (_, i) =>
+    photos.filter((_, idx) => idx % SLOT_COUNT === i),
+  );
+
+  return (
+    <div className="mx-auto mt-8 grid max-w-3xl grid-cols-2 gap-3 sm:grid-cols-4">
+      {slots.map((slotPhotos, i) => (
+        <PhotoSlot key={i} photos={slotPhotos} />
+      ))}
     </div>
   );
 }

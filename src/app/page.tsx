@@ -112,7 +112,6 @@ export default async function HomePage({
   return (
     <>
       <section className="relative overflow-hidden border-b border-stone-200 bg-white">
-        <HeroPhotos vertical={activeVertical} />
         <div
           aria-hidden
           className={`pointer-events-none absolute -top-24 left-1/2 h-72 w-[36rem] -translate-x-1/2 rounded-full blur-3xl ${theme.blob}`}
@@ -175,6 +174,8 @@ export default async function HomePage({
               Buscar
             </button>
           </form>
+
+          <HeroPhotos vertical={activeVertical} />
         </div>
       </section>
 
