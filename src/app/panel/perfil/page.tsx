@@ -27,7 +27,7 @@ export default async function EditarPerfilPage() {
   const [teacherProfile, allSubjects] = await Promise.all([
     prisma.teacherProfile.findUniqueOrThrow({
       where: { userId: session.user.id },
-      include: { subjects: true },
+      include: { subjects: true, availability: true },
     }),
     getAllSubjects(),
   ]);
@@ -42,6 +42,9 @@ export default async function EditarPerfilPage() {
         .filter((level): level is NonNullable<typeof level> => level !== null),
     ),
   ];
+  const selectedSlots = teacherProfile.availability.map(
+    (slot) => `${slot.weekday}-${slot.hour}`,
+  );
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-10">
@@ -91,6 +94,7 @@ export default async function EditarPerfilPage() {
         allSubjects={allSubjects}
         selectedSubjectIds={selectedSubjectIds}
         selectedLevels={selectedLevels}
+        selectedSlots={selectedSlots}
       />
     </main>
   );

@@ -53,6 +53,7 @@ export function getTeacherProfileById(id: string) {
     include: {
       user: { select: { name: true, avatarUrl: true, email: true } },
       subjects: { include: { subject: true } },
+      availability: true,
     },
   });
 }

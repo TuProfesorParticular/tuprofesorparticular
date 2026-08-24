@@ -10,6 +10,7 @@ import { startConversation } from "@/app/panel/mensajes/actions";
 import { bookFirstClass } from "./booking-actions";
 import { getReviewsForTeacher } from "@/lib/reviews";
 import ReviewForm from "./ReviewForm";
+import AvailabilityView from "@/components/AvailabilityView";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -154,6 +155,10 @@ export default async function TeacherProfilePage({ params, searchParams }: PageP
               </p>
             </div>
           )}
+
+          <div className="mt-5">
+            <AvailabilityView slots={teacher.availability} />
+          </div>
         </div>
 
         <div className="flex flex-shrink-0 flex-col items-center gap-3 rounded-lg border border-stone-100 p-4 sm:items-end">

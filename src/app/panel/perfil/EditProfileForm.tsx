@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import type { Subject, TeacherProfile } from "@prisma/client";
 import { LEVEL_LABELS, LEVEL_ORDER, MODALITY_LABELS } from "@/lib/constants";
 import { updateTeacherProfile, type EditProfileState } from "./actions";
+import AvailabilityGrid from "./AvailabilityGrid";
 
 const initialState: EditProfileState = {};
 
@@ -15,6 +16,7 @@ type EditProfileFormProps = {
   allSubjects: Subject[];
   selectedSubjectIds: string[];
   selectedLevels: string[];
+  selectedSlots: string[];
 };
 
 export default function EditProfileForm({
@@ -22,6 +24,7 @@ export default function EditProfileForm({
   allSubjects,
   selectedSubjectIds,
   selectedLevels,
+  selectedSlots,
 }: EditProfileFormProps) {
   const [state, formAction, isPending] = useActionState(
     updateTeacherProfile,
@@ -120,6 +123,15 @@ export default function EditProfileForm({
           ))}
         </div>
       </fieldset>
+
+      <div>
+        <label className="block text-sm font-medium text-stone-700">
+          Disponibilidad semanal
+        </label>
+        <div className="mt-1">
+          <AvailabilityGrid selectedSlots={selectedSlots} />
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>

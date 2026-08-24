@@ -2,10 +2,12 @@
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
+import type { Weekday } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/auth-helpers";
 import { uploadAvatar } from "@/lib/storage";
 import { getPlan } from "@/lib/plans";
+import { WEEKDAY_ORDER, AVAILABILITY_HOURS } from "@/lib/constants";
 
 const schema = z.object({
   bio: z.string().max(1000).optional(),
@@ -48,6 +50,17 @@ export async function updateTeacherProfile(
       ["primaria", "eso", "bachillerato", "universidad", "adultos"].includes(level),
     );
 
+  const slots = formData
+    .getAll("slots")
+    .map(String)
+    .flatMap((value) => {
+      const [weekday, hourStr] = value.split("-");
+      const hour = Number(hourStr);
+      return WEEKDAY_ORDER.includes(weekday as Weekday) && AVAILABILITY_HOURS.includes(hour)
+        ? [{ weekday: weekday as Weekday, hour }]
+        : [];
+    });
+
   const teacherProfile = await prisma.teacherProfile.findUniqueOrThrow({
     where: { userId: session.user.id },
   });
@@ -81,6 +94,20 @@ export async function updateTeacherProfile(
     prisma.teacherSubject.deleteMany({
       where: { teacherProfileId: teacherProfile.id },
     }),
+    prisma.availabilitySlot.deleteMany({
+      where: { teacherProfileId: teacherProfile.id },
+    }),
+    ...(slots.length > 0
+      ? [
+          prisma.availabilitySlot.createMany({
+            data: slots.map((slot) => ({
+              teacherProfileId: teacherProfile.id,
+              weekday: slot.weekday,
+              hour: slot.hour,
+            })),
+          }),
+        ]
+      : []),
     ...(subjectIds.length > 0
       ? [
           prisma.teacherSubject.createMany({

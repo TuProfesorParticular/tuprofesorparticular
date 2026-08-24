@@ -136,16 +136,42 @@ model TeacherProfile {
   stripeConnectAccountId String? @unique
   stripeConnectOnboarded Boolean @default(false)
 
-  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user          User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   subjects      TeacherSubject[]
   materials     Material[]
   bookings      Booking[]
   reviews       Review[]
   ethicsReports EthicsReport[]
+  availability  AvailabilitySlot[]
 
   @@index([status])
   @@index([city])
   @@map("teacher_profiles")
+}
+
+enum Weekday {
+  monday
+  tuesday
+  wednesday
+  thursday
+  friday
+  saturday
+  sunday
+}
+
+// Disponibilidad semanal recurrente del profesor/profesional: no es un
+// calendario de reservas reales, solo indica en qué días y horas suele
+// dar clase, para que el alumno sepa cuándo contactarle.
+model AvailabilitySlot {
+  id               String  @id @default(cuid())
+  teacherProfileId String
+  weekday          Weekday
+  hour             Int // hora de inicio del tramo, 0-23 (ej. 17 = 17:00-18:00)
+
+  teacherProfile TeacherProfile @relation(fields: [teacherProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([teacherProfileId, weekday, hour])
+  @@map("availability_slots")
 }
 
 // Valoración pública de un alumno sobre un profesor (solo tras una clase reservada y pagada)

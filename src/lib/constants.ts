@@ -1,4 +1,37 @@
-import type { Level, MaterialCourse, Modality, Vertical } from "@prisma/client";
+import type { Level, MaterialCourse, Modality, Vertical, Weekday } from "@prisma/client";
+
+export const WEEKDAY_LABELS: Record<Weekday, string> = {
+  monday: "Lunes",
+  tuesday: "Martes",
+  wednesday: "Miércoles",
+  thursday: "Jueves",
+  friday: "Viernes",
+  saturday: "Sábado",
+  sunday: "Domingo",
+};
+
+export const WEEKDAY_SHORT_LABELS: Record<Weekday, string> = {
+  monday: "Lun",
+  tuesday: "Mar",
+  wednesday: "Mié",
+  thursday: "Jue",
+  friday: "Vie",
+  saturday: "Sáb",
+  sunday: "Dom",
+};
+
+export const WEEKDAY_ORDER: Weekday[] = [
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+  "sunday",
+];
+
+// Franja horaria de la rejilla de disponibilidad: de 8:00 a 21:00 (tramos de 1h).
+export const AVAILABILITY_HOURS: number[] = Array.from({ length: 14 }, (_, i) => i + 8);
 
 // Ámbitos de nivel superior de la web: educación (el original), deporte
 // (entrenadores) y salud mental (psicólogos, psicopedagogos...).
