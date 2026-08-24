@@ -2,6 +2,7 @@ import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { logout } from "@/app/actions";
 import MobileMenu from "./MobileMenu";
+import Logo from "./Logo";
 
 export default async function Navbar() {
   const session = await auth();
@@ -10,8 +11,8 @@ export default async function Navbar() {
   return (
     <header className="relative border-b border-stone-200 bg-white">
       <nav className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-        <Link href="/" className="text-lg font-bold text-stone-900">
-          Tu<span className="text-teal-600">Profesor</span>Particular
+        <Link href="/">
+          <Logo />
         </Link>
 
         <div className="hidden items-center gap-4 text-sm font-medium sm:flex">

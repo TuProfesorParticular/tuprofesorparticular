@@ -6,6 +6,7 @@ import {
   MATERIALS_CATEGORY,
   UNIVERSITY_SECTION,
   VERTICALS,
+  VERTICAL_THEME,
   DEFAULT_VERTICAL,
 } from "@/lib/constants";
 import SearchFilters from "@/components/SearchFilters";
@@ -106,19 +107,20 @@ export default async function HomePage({
     },
   };
   const hero = HERO_COPY[activeVertical];
+  const theme = VERTICAL_THEME[activeVertical];
 
   return (
     <>
       <section className="relative overflow-hidden border-b border-stone-200 bg-white">
-        <HeroPhotos />
+        <HeroPhotos vertical={activeVertical} />
         <div
           aria-hidden
-          className="pointer-events-none absolute -top-24 left-1/2 h-72 w-[36rem] -translate-x-1/2 rounded-full bg-teal-200/40 blur-3xl"
+          className={`pointer-events-none absolute -top-24 left-1/2 h-72 w-[36rem] -translate-x-1/2 rounded-full blur-3xl ${theme.blob}`}
         />
         <div className="relative mx-auto max-w-6xl px-4 py-16 text-center sm:py-20">
           <h1 className="text-4xl font-extrabold tracking-tight text-stone-900 sm:text-6xl">
             {hero.title.replace(" ideal.", "")}{" "}
-            <span className="text-teal-600">ideal.</span>
+            <span className={theme.accentText}>ideal.</span>
           </h1>
           <p className="mx-auto mt-4 max-w-xl text-lg text-stone-500">
             {hero.subtitle}
@@ -131,8 +133,8 @@ export default async function HomePage({
                 href={v.slug === DEFAULT_VERTICAL ? "/" : `/?ambito=${v.slug}`}
                 className={`rounded-full border px-4 py-1.5 text-sm font-medium transition ${
                   activeVertical === v.slug
-                    ? "border-teal-600 bg-teal-600 text-white"
-                    : "border-stone-300 bg-white text-stone-600 hover:border-teal-400"
+                    ? VERTICAL_THEME[v.slug].pillActive
+                    : "border-stone-300 bg-white text-stone-600 hover:border-stone-400"
                 }`}
               >
                 {v.icon} {v.label}
@@ -168,7 +170,7 @@ export default async function HomePage({
             />
             <button
               type="submit"
-              className="rounded-lg bg-teal-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-teal-700"
+              className={`rounded-lg px-6 py-2.5 text-sm font-semibold text-white ${theme.button}`}
             >
               Buscar
             </button>

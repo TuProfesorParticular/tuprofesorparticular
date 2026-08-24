@@ -3,15 +3,16 @@ export type HeroPhoto = {
   alt: string;
 };
 
-const QUERY = "tutor teaching student";
-
-export async function getHeroPhotos(count = 5): Promise<HeroPhoto[]> {
+export async function getHeroPhotos(
+  query: string,
+  count = 5,
+): Promise<HeroPhoto[]> {
   const apiKey = process.env.PEXELS_API_KEY;
   if (!apiKey) return [];
 
   try {
     const response = await fetch(
-      `https://api.pexels.com/v1/search?query=${encodeURIComponent(QUERY)}&per_page=${count}&orientation=landscape`,
+      `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=${count}&orientation=landscape`,
       {
         headers: { Authorization: apiKey },
         next: { revalidate: 60 * 60 * 24 },

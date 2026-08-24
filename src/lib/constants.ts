@@ -65,6 +65,45 @@ export const VERTICALS: VerticalSection[] = [
 
 export const DEFAULT_VERTICAL: Vertical = "educacion";
 
+// Tema visual por ámbito: cada uno tiene su propio color de acento (en vez
+// de usar el teal de marca en los tres), y su propia búsqueda de fotos de
+// portada. Clases completas (no interpoladas) para que Tailwind no las purgue.
+export type VerticalTheme = {
+  pillActive: string;
+  blob: string;
+  button: string;
+  accentText: string;
+  heroWash: string;
+  heroQuery: string;
+};
+
+export const VERTICAL_THEME: Record<Vertical, VerticalTheme> = {
+  educacion: {
+    pillActive: "border-teal-600 bg-teal-600 text-white",
+    blob: "bg-teal-200/40",
+    button: "bg-teal-600 hover:bg-teal-700",
+    accentText: "text-teal-600",
+    heroWash: "from-teal-100/60 via-white/80 to-white",
+    heroQuery: "tutor teaching student",
+  },
+  deporte: {
+    pillActive: "border-orange-600 bg-orange-600 text-white",
+    blob: "bg-orange-200/40",
+    button: "bg-orange-600 hover:bg-orange-700",
+    accentText: "text-orange-600",
+    heroWash: "from-orange-100/60 via-white/80 to-white",
+    heroQuery: "personal trainer coaching athlete",
+  },
+  salud_mental: {
+    pillActive: "border-violet-600 bg-violet-600 text-white",
+    blob: "bg-violet-200/40",
+    button: "bg-violet-600 hover:bg-violet-700",
+    accentText: "text-violet-600",
+    heroWash: "from-violet-100/60 via-white/80 to-white",
+    heroQuery: "therapist counseling session",
+  },
+};
+
 export const MODALITY_LABELS: Record<Modality, string> = {
   in_person: "Presencial a domicilio",
   online: "Online",
