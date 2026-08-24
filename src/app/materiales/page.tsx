@@ -28,17 +28,17 @@ export default async function MaterialesPage({
           Apuntes, ejercicios y recursos que comparten los profesores, organizados por área.
         </p>
 
-        <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
           {CATEGORIES.filter((category) => category.vertical === "educacion").map((category) => (
             <Link
               key={category.slug}
               href={`/materiales?categoria=${encodeURIComponent(category.slug)}`}
-              className={`rounded-xl border p-6 transition hover:-translate-y-0.5 hover:shadow-md ${category.colors.bg} ${category.colors.border} ${category.colors.ring}`}
+              className="rounded-xl border border-stone-200 bg-white p-5 transition hover:-translate-y-0.5 hover:border-stone-300 hover:shadow-md"
             >
-              <h2 className={`text-lg font-semibold ${category.colors.text}`}>
+              <h2 className={`text-base font-semibold ${category.colors.text}`}>
                 {category.label}
               </h2>
-              <p className="mt-1 text-sm text-stone-600">{category.description}</p>
+              <p className="mt-1 text-sm text-stone-500">{category.description}</p>
             </Link>
           ))}
         </div>

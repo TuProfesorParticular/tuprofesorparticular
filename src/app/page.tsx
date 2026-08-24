@@ -8,6 +8,7 @@ import {
   VERTICALS,
   VERTICAL_THEME,
   DEFAULT_VERTICAL,
+  type CategorySection,
 } from "@/lib/constants";
 import SearchFilters from "@/components/SearchFilters";
 import TeacherCard from "@/components/TeacherCard";
@@ -39,6 +40,37 @@ const CATEGORY_ICONS: Record<string, string> = {
   "Psicología y Terapia": "🧠",
   "Psicopedagogía y Aprendizaje": "📘",
 };
+
+function CategoryTile({
+  href,
+  icon,
+  label,
+  description,
+  colors,
+}: {
+  href: string;
+  icon: string;
+  label: string;
+  description: string;
+  colors: CategorySection["colors"];
+}) {
+  return (
+    <Link
+      href={href}
+      className="flex items-start gap-4 rounded-xl border border-stone-200 bg-white p-5 transition hover:-translate-y-0.5 hover:border-stone-300 hover:shadow-md"
+    >
+      <span
+        className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-lg text-xl ${colors.bg}`}
+      >
+        {icon}
+      </span>
+      <div className="min-w-0">
+        <h2 className={`text-base font-semibold ${colors.text}`}>{label}</h2>
+        <p className="mt-1 text-sm text-stone-500">{description}</p>
+      </div>
+    </Link>
+  );
+}
 
 export default async function HomePage({
   searchParams,
@@ -180,48 +212,35 @@ export default async function HomePage({
       </section>
 
       <main className="mx-auto max-w-6xl px-4 py-10">
-        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {categoriesForVertical.map((category) => (
-            <Link
+            <CategoryTile
               key={category.slug}
               href={`/?categoria=${encodeURIComponent(category.slug)}${activeVertical !== DEFAULT_VERTICAL ? `&ambito=${activeVertical}` : ""}`}
-              className={`rounded-2xl border p-5 transition hover:-translate-y-1 hover:shadow-lg ${category.colors.bg} ${category.colors.border} ${category.colors.ring}`}
-            >
-              <span className="text-2xl">{CATEGORY_ICONS[category.slug]}</span>
-              <h2 className={`mt-2 text-lg font-bold ${category.colors.text}`}>
-                {category.label}
-              </h2>
-              <p className="mt-1 text-xs text-stone-600">{category.description}</p>
-            </Link>
+              icon={CATEGORY_ICONS[category.slug]}
+              label={category.label}
+              description={category.description}
+              colors={category.colors}
+            />
           ))}
 
           {activeVertical === "educacion" && (
             <>
-              <Link
+              <CategoryTile
                 href="/?nivel=universidad"
-                className={`rounded-2xl border p-5 transition hover:-translate-y-1 hover:shadow-lg ${UNIVERSITY_SECTION.colors.bg} ${UNIVERSITY_SECTION.colors.border} ${UNIVERSITY_SECTION.colors.ring}`}
-              >
-                <span className="text-2xl">{CATEGORY_ICONS.Universidad}</span>
-                <h2 className={`mt-2 text-lg font-bold ${UNIVERSITY_SECTION.colors.text}`}>
-                  {UNIVERSITY_SECTION.label}
-                </h2>
-                <p className="mt-1 text-xs text-stone-600">
-                  {UNIVERSITY_SECTION.description}
-                </p>
-              </Link>
+                icon={CATEGORY_ICONS.Universidad}
+                label={UNIVERSITY_SECTION.label}
+                description={UNIVERSITY_SECTION.description}
+                colors={UNIVERSITY_SECTION.colors}
+              />
 
-              <Link
+              <CategoryTile
                 href="/materiales"
-                className={`rounded-2xl border p-5 transition hover:-translate-y-1 hover:shadow-lg ${MATERIALS_CATEGORY.colors.bg} ${MATERIALS_CATEGORY.colors.border} ${MATERIALS_CATEGORY.colors.ring}`}
-              >
-                <span className="text-2xl">📁</span>
-                <h2 className={`mt-2 text-lg font-bold ${MATERIALS_CATEGORY.colors.text}`}>
-                  {MATERIALS_CATEGORY.label}
-                </h2>
-                <p className="mt-1 text-xs text-stone-600">
-                  {MATERIALS_CATEGORY.description}
-                </p>
-              </Link>
+                icon="📁"
+                label={MATERIALS_CATEGORY.label}
+                description={MATERIALS_CATEGORY.description}
+                colors={MATERIALS_CATEGORY.colors}
+              />
             </>
           )}
         </section>

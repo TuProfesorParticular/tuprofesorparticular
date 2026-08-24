@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import type { HeroPhoto } from "@/lib/pexels";
 
 const INTERVAL_MS = 4000;
-const SLOT_COUNT = 4;
+const SLOT_COUNT = 3;
 
 function PhotoSlot({ photos }: { photos: HeroPhoto[] }) {
   const [index, setIndex] = useState(0);
@@ -42,7 +42,7 @@ export default function HeroPhotoStrip({ photos }: { photos: HeroPhoto[] }) {
   );
 
   return (
-    <div className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-4">
+    <div className="mt-6 grid grid-cols-3 gap-1.5">
       {slots.map((slotPhotos, i) => (
         <PhotoSlot key={i} photos={slotPhotos} />
       ))}
