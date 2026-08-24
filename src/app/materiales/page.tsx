@@ -4,8 +4,41 @@ import type { MaterialCourse } from "@prisma/client";
 import { CATEGORIES, MATERIAL_COURSE_LABELS, MATERIAL_COURSE_ORDER } from "@/lib/constants";
 import {
   getMaterialCountsByCourse,
+  getMaterialsByCategory,
   getMaterialsByCategoryAndCourse,
 } from "@/lib/materials";
+
+function MaterialCard({
+  material,
+}: {
+  material: {
+    id: string;
+    title: string;
+    description: string | null;
+    fileUrl: string;
+    teacherProfile: { user: { name: string } };
+  };
+}) {
+  return (
+    <li className="rounded-xl border border-stone-200 bg-white p-4 shadow-sm">
+      <p className="font-medium text-stone-900">{material.title}</p>
+      {material.description && (
+        <p className="mt-1 text-sm text-stone-600">{material.description}</p>
+      )}
+      <p className="mt-2 text-xs text-stone-400">
+        Por {material.teacherProfile.user.name}
+      </p>
+      <a
+        href={material.fileUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mt-3 inline-block rounded-lg bg-rose-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-rose-700"
+      >
+        Descargar
+      </a>
+    </li>
+  );
+}
 
 export const metadata: Metadata = {
   title: "Materiales · TuProfesorParticular",
@@ -49,6 +82,53 @@ export default async function MaterialesPage({
   const category = CATEGORIES.find(
     (c) => c.slug.toLowerCase() === categoria.toLowerCase(),
   );
+
+  // Oposiciones no tiene "cursos" (1º ESO, 2º Bachillerato...) -- se
+  // organiza directamente por oposición (Auxiliar Administrativo, Policía
+  // Nacional...), así que se salta el paso de elegir curso.
+  if (categoria.toLowerCase() === "oposiciones") {
+    const materials = await getMaterialsByCategory(categoria);
+
+    const materialsBySubject = new Map<string, typeof materials>();
+    for (const material of materials) {
+      const list = materialsBySubject.get(material.subject.name) ?? [];
+      list.push(material);
+      materialsBySubject.set(material.subject.name, list);
+    }
+
+    return (
+      <main className="mx-auto max-w-4xl px-4 py-10">
+        <Link href="/materiales" className="text-sm text-teal-600 hover:underline">
+          ← Todas las categorías
+        </Link>
+        <h1 className="mt-2 text-3xl font-bold text-stone-900">
+          {category?.label ?? categoria}
+        </h1>
+        <p className="mt-2 text-stone-500">
+          Materiales organizados por las oposiciones más demandadas.
+        </p>
+
+        {materialsBySubject.size === 0 ? (
+          <p className="mt-8 rounded-lg border border-dashed border-stone-300 p-8 text-center text-stone-400">
+            Todavía no hay materiales en esta categoría.
+          </p>
+        ) : (
+          <div className="mt-8 space-y-8">
+            {[...materialsBySubject.entries()].map(([subjectName, items]) => (
+              <section key={subjectName}>
+                <h2 className="text-lg font-semibold text-stone-900">{subjectName}</h2>
+                <ul className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  {items.map((material) => (
+                    <MaterialCard key={material.id} material={material} />
+                  ))}
+                </ul>
+              </section>
+            ))}
+          </div>
+        )}
+      </main>
+    );
+  }
 
   const isValidCourse = (
     MATERIAL_COURSE_ORDER as string[]
@@ -120,26 +200,7 @@ export default async function MaterialesPage({
               <h2 className="text-lg font-semibold text-stone-900">{subjectName}</h2>
               <ul className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {items.map((material) => (
-                  <li
-                    key={material.id}
-                    className="rounded-xl border border-stone-200 bg-white p-4 shadow-sm"
-                  >
-                    <p className="font-medium text-stone-900">{material.title}</p>
-                    {material.description && (
-                      <p className="mt-1 text-sm text-stone-600">{material.description}</p>
-                    )}
-                    <p className="mt-2 text-xs text-stone-400">
-                      Por {material.teacherProfile.user.name}
-                    </p>
-                    <a
-                      href={material.fileUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-3 inline-block rounded-lg bg-rose-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-rose-700"
-                    >
-                      Descargar
-                    </a>
-                  </li>
+                  <MaterialCard key={material.id} material={material} />
                 ))}
               </ul>
             </section>
