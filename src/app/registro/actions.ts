@@ -15,6 +15,9 @@ const registerSchema = z.object({
   role: z.enum(["student", "teacher"], {
     message: "Selecciona si eres alumno o profesor",
   }),
+  acceptTerms: z.literal("on", {
+    message: "Debes aceptar los Términos y la Política de Privacidad",
+  }),
 });
 
 export type RegisterState = {
@@ -30,6 +33,7 @@ export async function registerUser(
     email: formData.get("email"),
     password: formData.get("password"),
     role: formData.get("role"),
+    acceptTerms: formData.get("acceptTerms"),
   });
 
   if (!parsed.success) {

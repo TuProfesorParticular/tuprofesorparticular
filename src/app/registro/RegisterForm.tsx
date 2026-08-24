@@ -106,6 +106,26 @@ export default function RegisterForm() {
         <p className="mt-1 text-xs text-stone-400">Mínimo 8 caracteres.</p>
       </div>
 
+      <label className="flex items-start gap-2 text-sm text-stone-600">
+        <input
+          type="checkbox"
+          name="acceptTerms"
+          required
+          className="mt-0.5 h-4 w-4 rounded border-stone-300 text-teal-600 focus:ring-teal-500"
+        />
+        <span>
+          He leído y acepto los{" "}
+          <a href="/terminos" target="_blank" className="text-teal-600 hover:underline">
+            Términos y Condiciones
+          </a>{" "}
+          y la{" "}
+          <a href="/privacidad" target="_blank" className="text-teal-600 hover:underline">
+            Política de Privacidad
+          </a>
+          .
+        </span>
+      </label>
+
       {state.error && (
         <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
           {state.error}
