@@ -39,6 +39,19 @@ export async function getMaterialCountsByCourse(category: string) {
   return counts;
 }
 
+export async function getMaterialCountsBySubject(category: string) {
+  const materials = await prisma.material.findMany({
+    where: { subject: { category: { equals: category, mode: "insensitive" } } },
+    select: { subjectId: true },
+  });
+
+  const counts = new Map<string, number>();
+  for (const material of materials) {
+    counts.set(material.subjectId, (counts.get(material.subjectId) ?? 0) + 1);
+  }
+  return counts;
+}
+
 export function getMaterialsBySubject(subjectId: string) {
   return prisma.material.findMany({
     where: { subjectId },

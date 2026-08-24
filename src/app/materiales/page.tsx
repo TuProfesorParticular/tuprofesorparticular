@@ -4,9 +4,11 @@ import type { MaterialCourse } from "@prisma/client";
 import { CATEGORIES, MATERIAL_COURSE_LABELS, MATERIAL_COURSE_ORDER } from "@/lib/constants";
 import {
   getMaterialCountsByCourse,
-  getMaterialsByCategory,
+  getMaterialCountsBySubject,
   getMaterialsByCategoryAndCourse,
+  getMaterialsBySubject,
 } from "@/lib/materials";
+import { getSubjectsByCategory } from "@/lib/teachers";
 
 function MaterialCard({
   material,
@@ -44,14 +46,14 @@ export const metadata: Metadata = {
   title: "Materiales · TuProfesorParticular",
 };
 
-type SearchParams = { categoria?: string; curso?: string };
+type SearchParams = { categoria?: string; curso?: string; materia?: string };
 
 export default async function MaterialesPage({
   searchParams,
 }: {
   searchParams: Promise<SearchParams>;
 }) {
-  const { categoria, curso } = await searchParams;
+  const { categoria, curso, materia } = await searchParams;
 
   if (!categoria) {
     return (
@@ -84,47 +86,71 @@ export default async function MaterialesPage({
   );
 
   // Oposiciones no tiene "cursos" (1º ESO, 2º Bachillerato...) -- se
-  // organiza directamente por oposición (Auxiliar Administrativo, Policía
-  // Nacional...), así que se salta el paso de elegir curso.
+  // organiza directamente en una carpeta por cada oposición demandada
+  // (Auxiliar Administrativo, Policía Nacional...), no por curso.
   if (categoria.toLowerCase() === "oposiciones") {
-    const materials = await getMaterialsByCategory(categoria);
+    const oposicionSubjects = await getSubjectsByCategory("Oposiciones");
+    const selectedSubject = oposicionSubjects.find((s) => s.id === materia);
 
-    const materialsBySubject = new Map<string, typeof materials>();
-    for (const material of materials) {
-      const list = materialsBySubject.get(material.subject.name) ?? [];
-      list.push(material);
-      materialsBySubject.set(material.subject.name, list);
+    if (!materia || !selectedSubject) {
+      const counts = await getMaterialCountsBySubject(categoria);
+
+      return (
+        <main className="mx-auto max-w-4xl px-4 py-10">
+          <Link href="/materiales" className="text-sm text-teal-600 hover:underline">
+            ← Todas las categorías
+          </Link>
+          <h1 className="mt-2 text-3xl font-bold text-stone-900">
+            {category?.label ?? categoria}
+          </h1>
+          <p className="mt-2 text-stone-500">
+            Elige la oposición para ver los materiales.
+          </p>
+
+          <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {oposicionSubjects.map((subject) => (
+              <Link
+                key={subject.id}
+                href={`/materiales?categoria=${encodeURIComponent(categoria)}&materia=${subject.id}`}
+                className="rounded-xl border border-stone-200 bg-white p-4 text-center transition hover:-translate-y-0.5 hover:border-stone-300 hover:shadow-md"
+              >
+                <p className={`font-semibold ${category?.colors.text ?? "text-stone-700"}`}>
+                  {subject.name}
+                </p>
+                <p className="mt-1 text-xs text-stone-400">
+                  {counts.get(subject.id) ?? 0} materiales
+                </p>
+              </Link>
+            ))}
+          </div>
+        </main>
+      );
     }
+
+    const materials = await getMaterialsBySubject(selectedSubject.id);
 
     return (
       <main className="mx-auto max-w-4xl px-4 py-10">
-        <Link href="/materiales" className="text-sm text-teal-600 hover:underline">
-          ← Todas las categorías
+        <Link
+          href={`/materiales?categoria=${encodeURIComponent(categoria)}`}
+          className="text-sm text-teal-600 hover:underline"
+        >
+          ← {category?.label ?? categoria}
         </Link>
         <h1 className="mt-2 text-3xl font-bold text-stone-900">
-          {category?.label ?? categoria}
+          {selectedSubject.name}
         </h1>
-        <p className="mt-2 text-stone-500">
-          Materiales organizados por las oposiciones más demandadas.
-        </p>
 
-        {materialsBySubject.size === 0 ? (
+        {materials.length === 0 ? (
           <p className="mt-8 rounded-lg border border-dashed border-stone-300 p-8 text-center text-stone-400">
-            Todavía no hay materiales en esta categoría.
+            Todavía no hay materiales para esta oposición.
           </p>
         ) : (
-          <div className="mt-8 space-y-8">
-            {[...materialsBySubject.entries()].map(([subjectName, items]) => (
-              <section key={subjectName}>
-                <h2 className="text-lg font-semibold text-stone-900">{subjectName}</h2>
-                <ul className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  {items.map((material) => (
-                    <MaterialCard key={material.id} material={material} />
-                  ))}
-                </ul>
-              </section>
+          <ul className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {materials.map((material) => (
+              <MaterialCard key={material.id} material={material} />
             ))}
-          </div>
+          </ul>
         )}
       </main>
     );
