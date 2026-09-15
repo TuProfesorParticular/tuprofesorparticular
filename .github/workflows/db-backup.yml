@@ -1,0 +1,37 @@
+name: Backup de la base de datos
+
+# Copia de seguridad diaria de la base de datos de producción, mientras el
+# proyecto de Supabase está en el plan Free (que no incluye backups
+# automáticos). Es una solución gratuita de transición: en cuanto el
+# proyecto pase al plan Pro de Supabase, sus backups gestionados la hacen
+# innecesaria y este workflow se puede desactivar.
+on:
+  schedule:
+    - cron: "0 3 * * *" # todos los días a las 3:00 UTC
+  workflow_dispatch: {} # permite lanzarlo a mano desde la pestaña "Actions"
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Instalar cliente de PostgreSQL
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Volcar la base de datos
+        env:
+          DATABASE_URL: ${{ secrets.SUPABASE_DIRECT_URL }}
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "Falta el secreto SUPABASE_DIRECT_URL en la configuración del repositorio." >&2
+            exit 1
+          fi
+          FILENAME="backup-$(date -u +%Y-%m-%d).sql.gz"
+          pg_dump "$DATABASE_URL" | gzip > "$FILENAME"
+          echo "FILENAME=$FILENAME" >> "$GITHUB_ENV"
+
+      - name: Subir la copia como artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: db-backup-${{ github.run_id }}
+          path: ${{ env.FILENAME }}
+          retention-days: 30
