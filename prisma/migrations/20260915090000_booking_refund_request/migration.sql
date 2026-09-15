@@ -1,0 +1,2 @@
+ALTER TABLE "bookings" ADD COLUMN IF NOT EXISTS "refundRequestedAt" TIMESTAMP(3);
+ALTER TABLE "bookings" ADD COLUMN IF NOT EXISTS "refundReason" TEXT;
