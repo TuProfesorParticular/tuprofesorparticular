@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { requireRole } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { requireStripe } from "@/lib/stripe";
-import { getPlan, getBasePrice, getDiscountedPrice, isInFounderFreeTrial } from "@/lib/plans";
+import { getPlan, isFounderPriced, getFinalPrice, isInFounderFreeTrial } from "@/lib/plans";
 import { getMonthlyMaterialCount } from "@/lib/materials";
 
 const APP_URL = process.env.APP_URL || "http://localhost:3000";
@@ -36,9 +36,9 @@ export async function startSubscriptionCheckout(formData: FormData) {
   }
 
   const plan = getPlan(planId);
-  const basePrice = getBasePrice(planId, teacherProfile);
   const materialsThisMonth = await getMonthlyMaterialCount(teacherProfile.id);
-  const price = getDiscountedPrice(basePrice, materialsThisMonth);
+  const price = getFinalPrice(planId, teacherProfile, materialsThisMonth);
+  const founderPriced = isFounderPriced(planId, teacherProfile);
 
   // Un fundador que todavía está en su ventana de Pro gratis y sube de
   // plan no debe pagar nada hasta que esa ventana termine.
@@ -58,7 +58,7 @@ export async function startSubscriptionCheckout(formData: FormData) {
           recurring: { interval: "month" },
           product_data: {
             name: `TuProfesorParticular — Plan ${plan.name}`,
-            ...(materialsThisMonth > 0
+            ...(!founderPriced && materialsThisMonth > 0
               ? {
                   description: `Incluye tu descuento por ${materialsThisMonth} material(es) compartido(s) este mes`,
                 }

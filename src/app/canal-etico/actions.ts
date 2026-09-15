@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { requireSession } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
+import { isLikelyBot } from "@/lib/antispam";
 
 const schema = z.object({
   teacherProfileId: z.string().optional(),
@@ -19,6 +20,10 @@ export async function submitEthicsReport(
   formData: FormData,
 ): Promise<EthicsReportState> {
   const session = await requireSession();
+
+  if (isLikelyBot(formData)) {
+    return { error: "No se ha podido procesar el reporte. Inténtalo de nuevo." };
+  }
 
   const parsed = schema.safeParse({
     teacherProfileId: formData.get("teacherProfileId") || undefined,

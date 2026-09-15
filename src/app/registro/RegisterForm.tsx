@@ -1,20 +1,33 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import type { Vertical } from "@prisma/client";
 import { MATERIAL_DISCOUNT_PER_UPLOAD, FOUNDER_LIMIT, FOUNDER_PRICES } from "@/lib/plans";
+import { VERTICALS, DEFAULT_VERTICAL } from "@/lib/constants";
+import HoneypotFields from "@/components/HoneypotFields";
 import { registerUser, type RegisterState } from "./actions";
 
 const initialState: RegisterState = {};
 
-export default function RegisterForm() {
+export default function RegisterForm({
+  referralId,
+  defaultRole = "student",
+}: {
+  referralId?: string;
+  defaultRole?: "student" | "teacher";
+}) {
   const [state, formAction, isPending] = useActionState(
     registerUser,
     initialState,
   );
-  const [role, setRole] = useState<"student" | "teacher">("student");
+  const [role, setRole] = useState<"student" | "teacher">(defaultRole);
+  const [vertical, setVertical] = useState<Vertical>(DEFAULT_VERTICAL);
 
   return (
     <form action={formAction} className="mt-8 space-y-5">
+      <HoneypotFields />
+      {referralId && <input type="hidden" name="ref" value={referralId} />}
+
       <fieldset>
         <legend className="mb-2 text-sm font-medium text-stone-700">
           Quiero registrarme como
@@ -46,20 +59,56 @@ export default function RegisterForm() {
 
         {role === "teacher" && (
           <>
+            {referralId && (
+              <p className="mt-3 rounded-lg bg-teal-50 px-3 py-2 text-xs text-teal-700">
+                🎁 Te ha invitado otro profesor de la plataforma.
+              </p>
+            )}
             <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
-              🎉 Los {FOUNDER_LIMIT} primeros profesores que se registren
-              obtienen el plan Pro <span className="font-medium">gratis</span>{" "}
-              los 3 primeros meses. Después, precio de fundador para siempre:{" "}
-              {FOUNDER_PRICES.pro}€/mes en Pro o {FOUNDER_PRICES.premium}
-              €/mes en Premium.
+              🎉 Los {FOUNDER_LIMIT} primeros profesionales de{" "}
+              <span className="font-medium">cada categoría</span> obtienen el
+              plan Pro <span className="font-medium">gratis durante 3 meses</span>.
+              Al terminar ese periodo, pasas{" "}
+              <span className="font-medium">automáticamente</span> a tu precio
+              de fundador: {FOUNDER_PRICES.pro}€/mes en Pro o{" "}
+              {FOUNDER_PRICES.premium}€/mes en Premium — sin necesidad de hacer
+              nada. Sin permanencia: cancela cuando quieras, sin costes
+              adicionales.
             </p>
             <p className="mt-2 rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-700">
-              💡 Si compartes materiales cada mes en tu sección de{" "}
-              <span className="font-medium">Materiales</span>, tus planes Pro
-              y Premium se abaratan {MATERIAL_DISCOUNT_PER_UPLOAD}€ por cada
-              material que subas ese mes. Es un descuento mes a mes: si un mes
-              no subes nada, la cuota de ese mes vuelve al precio original.
+              💡 Si <span className="font-medium">no</span> eres fundador (o
+              tu periodo de fundador ya pasó a precio fijo), aportar al
+              menos un material aprobado cada mes en tu sección de{" "}
+              <span className="font-medium">Materiales</span> abarata tus
+              planes Pro y Premium {MATERIAL_DISCOUNT_PER_UPLOAD}€ fijos ese mes —
+              da igual si subes uno o varios. Este descuento no se aplica al
+              precio de fundador, que ya es fijo y rebajado de por sí.
             </p>
+
+            <div className="mt-3">
+              <p className="mb-2 text-xs font-medium text-stone-600">
+                ¿A qué categoría perteneces?
+              </p>
+              <div className="grid grid-cols-3 gap-2">
+                {VERTICALS.map((v) => (
+                  <label
+                    key={v.slug}
+                    className="flex cursor-pointer flex-col items-center gap-1 rounded-lg border border-stone-300 px-2 py-2 text-center text-xs font-medium has-[:checked]:border-teal-600 has-[:checked]:bg-teal-50 has-[:checked]:text-teal-700"
+                  >
+                    <input
+                      type="radio"
+                      name="vertical"
+                      value={v.slug}
+                      checked={vertical === v.slug}
+                      onChange={() => setVertical(v.slug)}
+                      className="sr-only"
+                    />
+                    <span className="text-base">{v.icon}</span>
+                    {v.label}
+                  </label>
+                ))}
+              </div>
+            </div>
           </>
         )}
       </fieldset>

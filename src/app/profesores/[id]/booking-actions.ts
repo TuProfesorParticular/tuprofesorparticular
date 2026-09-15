@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { requireSession } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { requireStripe } from "@/lib/stripe";
-import { PLATFORM_FEE_PERCENT } from "@/lib/plans";
+import { computePlatformFeeCents } from "@/lib/plans";
 
 const APP_URL = process.env.APP_URL || "http://localhost:3000";
 
@@ -40,7 +40,7 @@ export async function bookFirstClass(formData: FormData) {
 
   const amount = Number(teacherProfile.pricePerHour);
   const amountCents = Math.round(amount * 100);
-  const platformFeeCents = Math.round((amountCents * PLATFORM_FEE_PERCENT) / 100);
+  const platformFeeCents = computePlatformFeeCents(amountCents);
 
   const checkoutSession = await stripe.checkout.sessions.create({
     mode: "payment",

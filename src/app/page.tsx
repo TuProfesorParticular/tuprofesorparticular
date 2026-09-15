@@ -1,44 +1,22 @@
 import Link from "next/link";
-import type { Modality, Level, Vertical } from "@prisma/client";
-import { getAllSubjects, getTeacherSearchResults } from "@/lib/teachers";
+import type { Vertical } from "@prisma/client";
 import {
   CATEGORIES,
-  MATERIALS_CATEGORY,
+  CATEGORY_ICONS,
   UNIVERSITY_SECTION,
   VERTICALS,
   VERTICAL_THEME,
   DEFAULT_VERTICAL,
   type CategorySection,
 } from "@/lib/constants";
-import SearchFilters from "@/components/SearchFilters";
-import TeacherCard from "@/components/TeacherCard";
 import PricingSection from "@/components/PricingSection";
 import Testimonials from "@/components/Testimonials";
 import FeaturedTeachers from "@/components/FeaturedTeachers";
 import HeroPhotos from "@/components/HeroPhotos";
+import MaterialesSpotlight from "@/components/MaterialesSpotlight";
 
 type SearchParams = {
-  materia?: string;
-  categoria?: string;
-  ciudad?: string;
-  modalidad?: string;
-  nivel?: string;
-  precioMax?: string;
   ambito?: string;
-};
-
-const CATEGORY_ICONS: Record<string, string> = {
-  Ciencias: "🔬",
-  Humanidades: "📚",
-  "Ciencias Sociales": "🗺️",
-  Oposiciones: "🏛️",
-  "Cursos oficiales": "🌍",
-  Universidad: "🎓",
-  "Deportes de Combate": "🥊",
-  "Deportes de Raqueta y Equipo": "🎾",
-  "Fitness y Bienestar Físico": "💪",
-  "Psicología y Terapia": "🧠",
-  "Psicopedagogía y Aprendizaje": "📘",
 };
 
 function CategoryTile({
@@ -47,25 +25,27 @@ function CategoryTile({
   label,
   description,
   colors,
+  wide = false,
 }: {
   href: string;
   icon: string;
   label: string;
   description: string;
   colors: CategorySection["colors"];
+  wide?: boolean;
 }) {
   return (
     <Link
       href={href}
-      className="flex items-start gap-4 rounded-xl border border-stone-200 bg-white p-5 transition hover:-translate-y-0.5 hover:border-stone-300 hover:shadow-md"
+      className={`group flex items-start gap-4 rounded-2xl border border-stone-200 bg-white p-5 transition hover:-translate-y-1 hover:border-transparent hover:shadow-xl ${wide ? "sm:col-span-2 lg:col-span-3" : ""}`}
     >
       <span
-        className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-lg text-xl ${colors.bg}`}
+        className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl text-2xl shadow-sm transition group-hover:scale-110 ${colors.bg}`}
       >
         {icon}
       </span>
       <div className="min-w-0">
-        <h2 className={`text-base font-semibold ${colors.text}`}>{label}</h2>
+        <h2 className={`text-base font-bold ${colors.text}`}>{label}</h2>
         <p className="mt-1 text-sm text-stone-500">{description}</p>
       </div>
     </Link>
@@ -83,59 +63,23 @@ export default async function HomePage({
     ? (params.ambito as Vertical)
     : DEFAULT_VERTICAL;
 
-  const hasActiveSearch = Boolean(
-    params.materia ||
-      params.categoria ||
-      params.ciudad ||
-      params.modalidad ||
-      params.nivel ||
-      params.precioMax,
-  );
-
   const categoriesForVertical = CATEGORIES.filter(
     (c) => c.vertical === activeVertical,
   );
 
-  const activeCategory = CATEGORIES.find(
-    (c) => c.slug.toLowerCase() === params.categoria?.toLowerCase(),
-  );
-  const isUniversityFilter =
-    !activeCategory && activeVertical === "educacion" && params.nivel === "universidad";
-
-  const [allSubjects, teachers] = await Promise.all([
-    getAllSubjects(),
-    hasActiveSearch
-      ? getTeacherSearchResults({
-          subject: params.materia || undefined,
-          category: params.categoria || undefined,
-          city: params.ciudad || undefined,
-          modality: (params.modalidad as Modality) || undefined,
-          level: (params.nivel as Level) || undefined,
-          maxPrice: params.precioMax ? Number(params.precioMax) : undefined,
-        })
-      : Promise.resolve(null),
-  ]);
-
-  const subjects = allSubjects.filter((s) => s.vertical === activeVertical);
-
-  const HERO_COPY: Record<Vertical, { title: string; subtitle: string; placeholder: string }> = {
+  const HERO_COPY: Record<Vertical, { title: string; subtitle: string }> = {
     educacion: {
       title: "Encuentra tu profesor particular ideal.",
       subtitle:
-        "Busca por materia, ubicación o modalidad y contacta directamente. Sin intermediarios innecesarios, sin letra pequeña.",
-      placeholder: "¿Qué quieres aprender? (ej. Matemáticas)",
+        "Elige tu categoría y contacta directamente con el profesor. Sin intermediarios innecesarios, sin letra pequeña.",
     },
     deporte: {
       title: "Encuentra tu entrenador ideal.",
-      subtitle:
-        "Busca por disciplina, ubicación o modalidad y contacta directamente con quien va a entrenarte.",
-      placeholder: "¿Qué deporte quieres entrenar? (ej. Boxeo)",
+      subtitle: "Elige tu disciplina y contacta directamente con quien va a entrenarte.",
     },
     salud_mental: {
       title: "Encuentra tu profesional ideal.",
-      subtitle:
-        "Busca psicólogos, psicopedagogos y profesionales del bienestar emocional y contacta directamente.",
-      placeholder: "¿Qué necesitas? (ej. Psicología Clínica)",
+      subtitle: "Elige tu especialidad y contacta directamente con el profesional adecuado.",
     },
   };
   const hero = HERO_COPY[activeVertical];
@@ -143,21 +87,38 @@ export default async function HomePage({
 
   return (
     <>
-      <section className="relative overflow-hidden border-b border-stone-200 bg-white">
+      <section className="relative overflow-hidden bg-white">
         <div
           aria-hidden
-          className={`pointer-events-none absolute -top-24 left-1/2 h-72 w-[36rem] -translate-x-1/2 rounded-full blur-3xl ${theme.blob}`}
+          className={`pointer-events-none absolute -top-32 left-1/2 h-96 w-[44rem] -translate-x-1/2 rounded-full blur-3xl ${theme.blobStrong}`}
         />
-        <div className="relative mx-auto max-w-6xl px-4 py-12 text-center sm:py-16">
-          <h1 className="text-4xl font-extrabold tracking-tight text-stone-900 sm:text-6xl">
+        <div
+          aria-hidden
+          className={`pointer-events-none absolute -right-24 top-10 h-72 w-72 rounded-full blur-3xl ${theme.blobAccent}`}
+        />
+        <div
+          aria-hidden
+          className={`pointer-events-none absolute -left-28 top-1/4 h-64 w-64 rounded-full blur-3xl ${theme.blob}`}
+        />
+
+        <div className="relative mx-auto max-w-6xl px-4 pb-16 pt-14 text-center sm:pt-20">
+          <span
+            className={`inline-flex items-center gap-1.5 rounded-full border px-4 py-1.5 text-xs font-semibold ${theme.badge}`}
+          >
+            ✨ Sin comisiones ocultas · Contacto directo
+          </span>
+
+          <h1 className="mx-auto mt-5 max-w-3xl text-4xl font-extrabold tracking-tight text-stone-900 sm:text-6xl">
             {hero.title.replace(" ideal.", "")}{" "}
-            <span className={theme.accentText}>ideal.</span>
+            <span className={`bg-clip-text text-transparent ${theme.textGradient}`}>
+              ideal.
+            </span>
           </h1>
           <p className="mx-auto mt-4 max-w-xl text-lg text-stone-500">
             {hero.subtitle}
           </p>
 
-          <div className="mx-auto mt-6 flex max-w-xl flex-wrap items-center justify-center gap-2">
+          <div className="mx-auto mt-7 flex max-w-xl flex-wrap items-center justify-center gap-2">
             {VERTICALS.map((v) => (
               <Link
                 key={v.slug}
@@ -173,50 +134,42 @@ export default async function HomePage({
             ))}
           </div>
 
-          <form
-            action="/"
-            method="get"
-            className="mx-auto mt-6 flex max-w-xl flex-col gap-2 rounded-2xl border border-stone-200 bg-white/90 p-2 shadow-lg backdrop-blur sm:flex-row"
+          <a
+            href="#categorias"
+            className={`mx-auto mt-7 inline-flex items-center gap-1.5 rounded-full px-6 py-2.5 text-sm font-semibold text-white shadow-md transition hover:shadow-lg ${theme.ctaGradient}`}
           >
-            {activeVertical !== DEFAULT_VERTICAL && (
-              <input type="hidden" name="ambito" value={activeVertical} />
-            )}
-            <input
-              type="text"
-              name="materia"
-              list="hero-subjects-list"
-              placeholder={hero.placeholder}
-              className="flex-1 rounded-lg border-0 px-3 py-2.5 text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-teal-500"
-            />
-            <datalist id="hero-subjects-list">
-              {subjects.map((subject) => (
-                <option key={subject.id} value={subject.name} />
-              ))}
-            </datalist>
-            <input
-              type="text"
-              name="ciudad"
-              placeholder="Ciudad (opcional)"
-              className="rounded-lg border-0 px-3 py-2.5 text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-teal-500 sm:w-40"
-            />
-            <button
-              type="submit"
-              className={`rounded-lg px-6 py-2.5 text-sm font-semibold text-white ${theme.button}`}
-            >
-              Buscar
-            </button>
-          </form>
+            👇 Elige tu categoría
+          </a>
 
           <HeroPhotos vertical={activeVertical} />
         </div>
+
+        <svg
+          aria-hidden
+          viewBox="0 0 1440 60"
+          className="block w-full text-stone-50"
+          preserveAspectRatio="none"
+        >
+          <path
+            fill="currentColor"
+            d="M0,32 C240,60 480,4 720,16 C960,28 1200,58 1440,30 L1440,60 L0,60 Z"
+          />
+        </svg>
       </section>
 
       <main className="mx-auto max-w-6xl px-4 py-10">
-        <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div id="categorias" className="scroll-mt-20 text-center">
+          <h2 className="text-2xl font-bold text-stone-900">Elige tu especialidad</h2>
+          <p className="mx-auto mt-1 max-w-md text-sm text-stone-500">
+            Entra en tu categoría para buscar y filtrar solo entre esos
+            profesionales.
+          </p>
+        </div>
+        <section className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {categoriesForVertical.map((category) => (
             <CategoryTile
               key={category.slug}
-              href={`/?categoria=${encodeURIComponent(category.slug)}${activeVertical !== DEFAULT_VERTICAL ? `&ambito=${activeVertical}` : ""}`}
+              href={`/categoria/${encodeURIComponent(category.slug)}`}
               icon={CATEGORY_ICONS[category.slug]}
               label={category.label}
               description={category.description}
@@ -225,80 +178,19 @@ export default async function HomePage({
           ))}
 
           {activeVertical === "educacion" && (
-            <>
-              <CategoryTile
-                href="/?nivel=universidad"
-                icon={CATEGORY_ICONS.Universidad}
-                label={UNIVERSITY_SECTION.label}
-                description={UNIVERSITY_SECTION.description}
-                colors={UNIVERSITY_SECTION.colors}
-              />
-
-              <CategoryTile
-                href="/materiales"
-                icon="📁"
-                label={MATERIALS_CATEGORY.label}
-                description={MATERIALS_CATEGORY.description}
-                colors={MATERIALS_CATEGORY.colors}
-              />
-            </>
+            <CategoryTile
+              href="/universidad"
+              icon={CATEGORY_ICONS.Universidad}
+              label={UNIVERSITY_SECTION.label}
+              description={UNIVERSITY_SECTION.description}
+              colors={UNIVERSITY_SECTION.colors}
+            />
           )}
         </section>
 
-        <FeaturedTeachers />
+        <MaterialesSpotlight vertical={activeVertical} />
 
-        {hasActiveSearch && (
-          <>
-            <section className="mt-10">
-              <Link
-                href={activeVertical !== DEFAULT_VERTICAL ? `/?ambito=${activeVertical}` : "/"}
-                className="text-sm text-teal-600 hover:underline"
-              >
-                ← Todas las categorías
-              </Link>
-              <div className="mt-3">
-                <SearchFilters
-                  subjects={subjects}
-                  defaultValues={params}
-                  showLevel={activeVertical === "educacion"}
-                />
-              </div>
-            </section>
-
-            <section className="mt-10">
-              <div className="mb-4 flex items-center justify-between">
-                <p className="text-sm text-stone-500">
-                  {teachers?.length ?? 0}{" "}
-                  {teachers?.length === 1 ? "profesor encontrado" : "profesores encontrados"}
-                  {activeCategory && (
-                    <>
-                      {" "}
-                      en <span className="font-medium">{activeCategory.label}</span>
-                    </>
-                  )}
-                  {isUniversityFilter && (
-                    <>
-                      {" "}
-                      en <span className="font-medium">Universidad</span>
-                    </>
-                  )}
-                </p>
-              </div>
-
-              {teachers && teachers.length > 0 ? (
-                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                  {teachers.map((teacher) => (
-                    <TeacherCard key={teacher.id} teacher={teacher} />
-                  ))}
-                </div>
-              ) : (
-                <p className="rounded-lg border border-dashed border-stone-300 p-8 text-center text-stone-400">
-                  No hay profesores que coincidan con tu búsqueda todavía.
-                </p>
-              )}
-            </section>
-          </>
-        )}
+        <FeaturedTeachers vertical={activeVertical} />
 
         <Testimonials />
 

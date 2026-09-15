@@ -8,10 +8,6 @@ export default function ConfirmacionRegistroPage() {
         Te hemos enviado un email de verificación. Confírmalo para activar tu
         cuenta por completo.
       </p>
-      <p className="mt-1 text-xs text-stone-400">
-        (El envío real de emails se activa al configurar EMAIL_SERVER en el
-        proyecto — ver .env.example.)
-      </p>
       <Link
         href="/"
         className="mt-6 inline-block rounded-lg bg-teal-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-teal-700"

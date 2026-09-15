@@ -16,22 +16,17 @@ export default function AvisoLegalPage() {
           siguientes datos:
         </p>
         <ul className="list-disc space-y-1 pl-5">
-          <li>Titular: [Nombre o razón social del titular]</li>
-          <li>NIF/CIF: [Pendiente de cumplimentar]</li>
-          <li>Domicilio: [Pendiente de cumplimentar]</li>
+          <li>Titular: Carlos Salazar Guzmán</li>
+          <li>NIF: 74388626W</li>
+          <li>Domicilio: Calle Andrés Perpiñán, nº 15, 3ºD, 03203 Elche (Alicante), España</li>
           <li>
             Correo de contacto:{" "}
-            <a href="mailto:legal@tuprofesorparticular.com" className="text-teal-600 hover:underline">
-              legal@tuprofesorparticular.com
+            <a href="mailto:contacto@tuprofesorparticular.es" className="text-teal-600 hover:underline">
+              contacto@tuprofesorparticular.es
             </a>
           </li>
           <li>Nombre del sitio: TuProfesorParticular</li>
         </ul>
-        <p>
-          Estos datos se completarán en cuanto la actividad quede formalizada
-          bajo una figura mercantil o de autónomo. Mientras tanto, cualquier
-          consulta puede dirigirse al correo de contacto indicado.
-        </p>
       </LegalSection>
 
       <LegalSection title="2. Objeto">

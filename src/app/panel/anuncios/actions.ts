@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/auth-helpers";
 import { LEVEL_ORDER } from "@/lib/constants";
+import { containsBannedLanguage, MODERATION_ERROR_MESSAGE } from "@/lib/moderation";
 
 const schema = z.object({
   title: z.string().min(2, "Introduce un título").max(200),
@@ -45,6 +46,13 @@ export async function createStudentRequest(
 
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Datos inválidos" };
+  }
+
+  if (
+    containsBannedLanguage(parsed.data.title) ||
+    containsBannedLanguage(parsed.data.description)
+  ) {
+    return { error: MODERATION_ERROR_MESSAGE };
   }
 
   await prisma.studentRequest.create({

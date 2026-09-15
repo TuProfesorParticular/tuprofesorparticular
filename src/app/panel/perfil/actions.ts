@@ -8,6 +8,7 @@ import { requireRole } from "@/lib/auth-helpers";
 import { uploadAvatar } from "@/lib/storage";
 import { getPlan } from "@/lib/plans";
 import { WEEKDAY_ORDER, AVAILABILITY_HOURS } from "@/lib/constants";
+import { containsBannedLanguage, MODERATION_ERROR_MESSAGE } from "@/lib/moderation";
 
 const schema = z.object({
   bio: z.string().max(1000).optional(),
@@ -16,6 +17,7 @@ const schema = z.object({
   city: z.string().max(120).optional(),
   postalCode: z.string().max(20).optional(),
   experienceText: z.string().max(2000).optional(),
+  licenseNumber: z.string().max(60).optional(),
 });
 
 export type EditProfileState = {
@@ -36,10 +38,18 @@ export async function updateTeacherProfile(
     city: formData.get("city") || undefined,
     postalCode: formData.get("postalCode") || undefined,
     experienceText: formData.get("experienceText") || undefined,
+    licenseNumber: formData.get("licenseNumber") || undefined,
   });
 
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Datos inválidos" };
+  }
+
+  if (
+    containsBannedLanguage(parsed.data.bio ?? "") ||
+    containsBannedLanguage(parsed.data.experienceText ?? "")
+  ) {
+    return { error: MODERATION_ERROR_MESSAGE };
   }
 
   const subjectIds = formData.getAll("subjectIds").map(String).filter(Boolean);
@@ -89,6 +99,7 @@ export async function updateTeacherProfile(
         city: parsed.data.city,
         postalCode: parsed.data.postalCode,
         experienceText: parsed.data.experienceText,
+        licenseNumber: parsed.data.licenseNumber,
       },
     }),
     prisma.teacherSubject.deleteMany({

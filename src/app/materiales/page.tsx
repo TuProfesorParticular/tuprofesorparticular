@@ -1,7 +1,13 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import type { MaterialCourse } from "@prisma/client";
-import { CATEGORIES, MATERIAL_COURSE_LABELS, MATERIAL_COURSE_ORDER } from "@/lib/constants";
+import type { MaterialCourse, Vertical } from "@prisma/client";
+import {
+  CATEGORIES,
+  MATERIAL_COURSE_LABELS,
+  getCoursesForCategory,
+  VERTICALS,
+  DEFAULT_VERTICAL,
+} from "@/lib/constants";
 import {
   getMaterialCountsByCourse,
   getMaterialCountsBySubject,
@@ -46,25 +52,71 @@ export const metadata: Metadata = {
   title: "Materiales · TuProfesorParticular",
 };
 
-type SearchParams = { categoria?: string; curso?: string; materia?: string };
+type SearchParams = { categoria?: string; curso?: string; materia?: string; ambito?: string };
+
+// Enlace de "volver" desde dentro de una categoría a la lista de
+// categorías de su mismo ámbito (Educación, Deporte o Salud Mental).
+function backToAllCategoriesHref(vertical: Vertical): string {
+  return vertical === DEFAULT_VERTICAL ? "/materiales" : `/materiales?ambito=${vertical}`;
+}
+
+// Categorías "estilo oposición": no se organizan por curso (1º ESO...),
+// sino en una carpeta directa por materia/especialidad. Además de
+// "Oposiciones" en sí, las oposiciones con muchas especialidades
+// (Secundaria) o que de momento solo llevan exámenes/casos prácticos
+// (Primaria, Infantil) tienen su propia categoría "hija" — ver
+// COMPOUND_OPOSICIONES más abajo.
+const OPOSICION_STYLE_CATEGORIES = new Set([
+  "oposiciones",
+  "oposición secundaria",
+  "oposición primaria",
+  "oposición infantil",
+]);
+
+// Enlaces desde la lista de "Oposiciones" hacia sus categorías hijas.
+const COMPOUND_OPOSICIONES = [
+  { label: "Oposición Secundaria", categoria: "Oposición Secundaria" },
+  { label: "Oposición Primaria", categoria: "Oposición Primaria" },
+  { label: "Oposición Infantil", categoria: "Oposición Infantil" },
+];
 
 export default async function MaterialesPage({
   searchParams,
 }: {
   searchParams: Promise<SearchParams>;
 }) {
-  const { categoria, curso, materia } = await searchParams;
+  const { categoria, curso, materia, ambito } = await searchParams;
 
   if (!categoria) {
+    const activeVertical: Vertical = VERTICALS.some((v) => v.slug === ambito)
+      ? (ambito as Vertical)
+      : DEFAULT_VERTICAL;
+
     return (
       <main className="mx-auto max-w-6xl px-4 py-10">
         <h1 className="text-3xl font-bold text-stone-900">Materiales</h1>
         <p className="mt-2 text-stone-500">
-          Apuntes, ejercicios y recursos que comparten los profesores, organizados por área.
+          Apuntes, ejercicios y recursos que comparten los profesionales, organizados por área.
         </p>
 
-        <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {CATEGORIES.filter((category) => category.vertical === "educacion").map((category) => (
+        <div className="mt-6 flex flex-wrap gap-2">
+          {VERTICALS.map((v) => (
+            <Link
+              key={v.slug}
+              href={v.slug === DEFAULT_VERTICAL ? "/materiales" : `/materiales?ambito=${v.slug}`}
+              className={`rounded-full border px-4 py-1.5 text-sm font-medium transition ${
+                activeVertical === v.slug
+                  ? "border-stone-900 bg-stone-900 text-white"
+                  : "border-stone-300 bg-white text-stone-600 hover:border-stone-400"
+              }`}
+            >
+              {v.icon} {v.label}
+            </Link>
+          ))}
+        </div>
+
+        <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {CATEGORIES.filter((category) => category.vertical === activeVertical).map((category) => (
             <Link
               key={category.slug}
               href={`/materiales?categoria=${encodeURIComponent(category.slug)}`}
@@ -85,36 +137,65 @@ export default async function MaterialesPage({
     (c) => c.slug.toLowerCase() === categoria.toLowerCase(),
   );
 
-  // Oposiciones no tiene "cursos" (1º ESO, 2º Bachillerato...) -- se
-  // organiza directamente en una carpeta por cada oposición demandada
-  // (Auxiliar Administrativo, Policía Nacional...), no por curso.
-  if (categoria.toLowerCase() === "oposiciones") {
-    const oposicionSubjects = await getSubjectsByCategory("Oposiciones");
+  // Oposiciones (y sus categorías hijas: Secundaria, Primaria, Infantil) no
+  // tienen "cursos" (1º ESO, 2º Bachillerato...) -- se organizan
+  // directamente en una carpeta por materia/especialidad.
+  if (OPOSICION_STYLE_CATEGORIES.has(categoria.toLowerCase())) {
+    const isOposicionesRoot = categoria.toLowerCase() === "oposiciones";
+    // Las categorías hijas no están en CATEGORIES (no son un globo de
+    // búsqueda de profesores en la home), así que heredan el color de
+    // "Oposiciones" para mantener la misma identidad visual.
+    const colorSource = category ?? CATEGORIES.find((c) => c.slug === "Oposiciones");
+
+    const oposicionSubjectsRaw = await getSubjectsByCategory(categoria);
+    // "Oposición Secundaria" y "Oposición Primaria" ya no son una materia
+    // suelta de "Oposiciones" (ahora son categorías propias, ver
+    // COMPOUND_OPOSICIONES) -- si quedara alguna fila antigua con ese
+    // nombre exacto en la base de datos, no se muestra como duplicado.
+    const oposicionSubjects = isOposicionesRoot
+      ? oposicionSubjectsRaw.filter(
+          (s) => !["oposición secundaria", "oposición primaria"].includes(s.name.toLowerCase()),
+        )
+      : oposicionSubjectsRaw;
     const selectedSubject = oposicionSubjects.find((s) => s.id === materia);
 
     if (!materia || !selectedSubject) {
       const counts = await getMaterialCountsBySubject(categoria);
+      const backHref = isOposicionesRoot ? "/materiales" : "/materiales?categoria=Oposiciones";
+      const backLabel = isOposicionesRoot ? "Todas las categorías" : "Oposiciones";
 
       return (
         <main className="mx-auto max-w-4xl px-4 py-10">
-          <Link href="/materiales" className="text-sm text-teal-600 hover:underline">
-            ← Todas las categorías
+          <Link href={backHref} className="text-sm text-teal-600 hover:underline">
+            ← {backLabel}
           </Link>
           <h1 className="mt-2 text-3xl font-bold text-stone-900">
             {category?.label ?? categoria}
           </h1>
           <p className="mt-2 text-stone-500">
-            Elige la oposición para ver los materiales.
+            Elige {isOposicionesRoot ? "la oposición" : "una opción"} para ver los materiales.
           </p>
 
           <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {isOposicionesRoot &&
+              COMPOUND_OPOSICIONES.map((opo) => (
+                <Link
+                  key={opo.categoria}
+                  href={`/materiales?categoria=${encodeURIComponent(opo.categoria)}`}
+                  className="rounded-xl border border-stone-200 bg-white p-4 text-center transition hover:-translate-y-0.5 hover:border-stone-300 hover:shadow-md"
+                >
+                  <p className={`font-semibold ${colorSource?.colors.text ?? "text-stone-700"}`}>
+                    {opo.label}
+                  </p>
+                </Link>
+              ))}
             {oposicionSubjects.map((subject) => (
               <Link
                 key={subject.id}
                 href={`/materiales?categoria=${encodeURIComponent(categoria)}&materia=${subject.id}`}
                 className="rounded-xl border border-stone-200 bg-white p-4 text-center transition hover:-translate-y-0.5 hover:border-stone-300 hover:shadow-md"
               >
-                <p className={`font-semibold ${category?.colors.text ?? "text-stone-700"}`}>
+                <p className={`font-semibold ${colorSource?.colors.text ?? "text-stone-700"}`}>
                   {subject.name}
                 </p>
                 <p className="mt-1 text-xs text-stone-400">
@@ -156,16 +237,19 @@ export default async function MaterialesPage({
     );
   }
 
-  const isValidCourse = (
-    MATERIAL_COURSE_ORDER as string[]
-  ).includes(curso ?? "");
+  const coursesForCategory = getCoursesForCategory(category?.slug ?? categoria);
+
+  const isValidCourse = (coursesForCategory as string[]).includes(curso ?? "");
 
   if (!curso || !isValidCourse) {
     const counts = await getMaterialCountsByCourse(categoria);
 
     return (
       <main className="mx-auto max-w-4xl px-4 py-10">
-        <Link href="/materiales" className="text-sm text-teal-600 hover:underline">
+        <Link
+          href={backToAllCategoriesHref(category?.vertical ?? DEFAULT_VERTICAL)}
+          className="text-sm text-teal-600 hover:underline"
+        >
           ← Todas las categorías
         </Link>
         <h1 className="mt-2 text-3xl font-bold text-stone-900">
@@ -174,7 +258,7 @@ export default async function MaterialesPage({
         <p className="mt-2 text-stone-500">Elige el curso para ver los materiales.</p>
 
         <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {MATERIAL_COURSE_ORDER.map((courseValue) => (
+          {coursesForCategory.map((courseValue) => (
             <Link
               key={courseValue}
               href={`/materiales?categoria=${encodeURIComponent(categoria)}&curso=${courseValue}`}

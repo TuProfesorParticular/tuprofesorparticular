@@ -1,8 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { logout } from "@/app/actions";
+import TuCvNavLink from "./TuCvNavLink";
+
+function TuCvNavLinkFallback() {
+  return (
+    <Link
+      href="/tu-cv"
+      className="rounded-full bg-gradient-to-r from-teal-600 to-emerald-500 px-4 py-1.5 text-white shadow-sm"
+    >
+      Tu CV
+    </Link>
+  );
+}
 
 export default function MobileMenu({ isLoggedIn }: { isLoggedIn: boolean }) {
   const [open, setOpen] = useState(false);
@@ -31,6 +43,11 @@ export default function MobileMenu({ isLoggedIn }: { isLoggedIn: boolean }) {
       {open && (
         <div className="absolute inset-x-0 top-full z-50 border-b border-stone-200 bg-white px-4 py-4 shadow-lg">
           <div className="flex flex-col gap-1 text-sm font-medium">
+            <div className="mb-1 self-start" onClick={close}>
+              <Suspense fallback={<TuCvNavLinkFallback />}>
+                <TuCvNavLink />
+              </Suspense>
+            </div>
             <Link
               href="/"
               onClick={close}
@@ -44,6 +61,13 @@ export default function MobileMenu({ isLoggedIn }: { isLoggedIn: boolean }) {
               className="rounded-lg px-3 py-2 text-stone-600 hover:bg-stone-50 hover:text-stone-900"
             >
               Materiales
+            </Link>
+            <Link
+              href="/preguntas-frecuentes"
+              onClick={close}
+              className="rounded-lg px-3 py-2 text-stone-600 hover:bg-stone-50 hover:text-stone-900"
+            >
+              Preguntas frecuentes
             </Link>
 
             {isLoggedIn ? (

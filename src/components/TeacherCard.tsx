@@ -63,7 +63,12 @@ export default function TeacherCard({ teacher }: { teacher: TeacherCardData }) {
           </p>
         </div>
 
-        {teacher.plan !== "free" && (
+        {teacher.plan === "premium" && (
+          <span className="absolute right-2 top-2 rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white shadow">
+            ★ Premium
+          </span>
+        )}
+        {teacher.plan === "pro" && (
           <span className="absolute right-2 top-2 rounded-full bg-amber-400 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-amber-950 shadow">
             Destacado
           </span>

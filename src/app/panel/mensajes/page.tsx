@@ -12,27 +12,15 @@ export default async function MensajesPage() {
   const conversations = await getConversationsForUser(session.user.id);
 
   return (
-    <main className="mx-auto max-w-2xl px-4 py-10">
-      <div className="flex flex-wrap gap-4 text-sm">
-        {session.user.role === "student" ? (
-          <Link href="/panel/anuncios" className="text-teal-600 hover:underline">
-            Mis anuncios
-          </Link>
-        ) : (
-          <Link href="/panel/alumnos" className="text-teal-600 hover:underline">
-            Alumnos buscan profesor
-          </Link>
-        )}
-      </div>
-
-      <h1 className="mt-2 text-2xl font-bold text-stone-900">Mensajes</h1>
+    <div className="mx-auto max-w-2xl">
+      <h1 className="text-2xl font-bold text-stone-900">Mensajes</h1>
 
       {conversations.length === 0 ? (
         <p className="mt-8 rounded-lg border border-dashed border-stone-300 p-8 text-center text-stone-400">
           Todavía no tienes conversaciones.
         </p>
       ) : (
-        <ul className="mt-6 divide-y divide-stone-100 rounded-xl border border-stone-200 bg-white">
+        <ul className="mt-6 divide-y divide-stone-100 rounded-2xl border border-stone-200 bg-white shadow-sm">
           {conversations.map((conversation) => {
             const isStudent = conversation.studentId === session.user.id;
             const otherParty = isStudent
@@ -68,6 +56,6 @@ export default async function MensajesPage() {
           })}
         </ul>
       )}
-    </main>
+    </div>
   );
 }

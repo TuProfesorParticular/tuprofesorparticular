@@ -1,6 +1,15 @@
 @import "tailwindcss";
 
 @theme inline {
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-jakarta);
   --font-mono: var(--font-geist-mono);
+}
+
+/* Evita que cualquier elemento demasiado ancho fuerce scroll/zoom horizontal
+   en el navegador (especialmente notorio en los navegadores integrados de
+   WhatsApp/Instagram, que reaccionan mal a cualquier desbordamiento). */
+html,
+body {
+  overflow-x: hidden;
+  max-width: 100vw;
 }

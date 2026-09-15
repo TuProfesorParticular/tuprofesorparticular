@@ -9,6 +9,12 @@ export default function Footer() {
           <Link href="/materiales" className="hover:text-stone-700">
             Materiales
           </Link>
+          <Link href="/para-profesores" className="hover:text-stone-700">
+            Para profesionales
+          </Link>
+          <Link href="/preguntas-frecuentes" className="hover:text-stone-700">
+            Preguntas frecuentes
+          </Link>
           <Link href="/canal-etico" className="hover:text-stone-700">
             Canal ético
           </Link>

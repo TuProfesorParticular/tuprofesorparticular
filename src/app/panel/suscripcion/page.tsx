@@ -7,12 +7,15 @@ import {
   getPlan,
   getBasePrice,
   getDiscountedPrice,
+  isFounderPriced,
   isInFounderFreeTrial,
   FOUNDER_PRICES,
   MATERIAL_DISCOUNT_PER_UPLOAD,
 } from "@/lib/plans";
 import { syncFounderExpiry } from "@/lib/founders";
+import { VERTICAL_THEME } from "@/lib/constants";
 import { startSubscriptionCheckout, openBillingPortal } from "./actions";
+import CommissionSimulator from "./CommissionSimulator";
 
 export const metadata: Metadata = {
   title: "Mi suscripción · TuProfesorParticular",
@@ -30,6 +33,7 @@ export default async function SuscripcionPage({
     where: { userId: session.user.id },
   });
   const teacherProfile = await syncFounderExpiry(rawTeacherProfile);
+  const theme = VERTICAL_THEME[teacherProfile.vertical];
 
   const [currentPlan, materialsThisMonth] = await Promise.all([
     getPlan(teacherProfile.plan),
@@ -44,7 +48,7 @@ export default async function SuscripcionPage({
     : null;
 
   return (
-    <main className="mx-auto max-w-5xl px-4 py-10">
+    <div className="mx-auto max-w-5xl">
       <h1 className="text-2xl font-bold text-stone-900">Mi suscripción</h1>
       <p className="mt-1 text-sm text-stone-500">
         Plan actual: <span className="font-semibold">{currentPlan.name}</span>
@@ -58,10 +62,12 @@ export default async function SuscripcionPage({
 
       {teacherProfile.isFounder && (
         <p className="mt-3 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          🎉 Eres profesor fundador (uno de los 100 primeros).{" "}
+          🎉 Eres profesor fundador (uno de los 100 primeros de tu categoría).{" "}
           {inFreeTrial
-            ? `Tu plan Pro es gratis hasta el ${founderUntilLabel}. Después, tu precio de fundador se queda fijo para siempre: ${FOUNDER_PRICES.pro}€/mes en Pro o ${FOUNDER_PRICES.premium}€/mes en Premium.`
-            : `Tienes precio de fundador para siempre: ${FOUNDER_PRICES.pro}€/mes en Pro o ${FOUNDER_PRICES.premium}€/mes en Premium, en vez del precio normal.`}
+            ? `Tienes el plan Pro GRATIS durante tus primeros 3 meses, hasta el ${founderUntilLabel}. Al terminar ese periodo, pasarás automáticamente a tu precio de fundador fijo para siempre: ${FOUNDER_PRICES.pro}€/mes en Pro u ${FOUNDER_PRICES.premium}€/mes en Premium.`
+            : `Tienes tu precio de fundador fijo para siempre: ${FOUNDER_PRICES.pro}€/mes en Pro u ${FOUNDER_PRICES.premium}€/mes en Premium, en vez del precio normal.`}{" "}
+          Al ser un precio ya rebajado, no se le suma el descuento por
+          materiales — eso solo aplica al precio normal (ver abajo).
         </p>
       )}
 
@@ -76,56 +82,47 @@ export default async function SuscripcionPage({
         <form action={openBillingPortal} className="mt-3">
           <button
             type="submit"
-            className="text-sm text-teal-600 hover:underline"
+            className={`text-sm hover:underline ${theme.accentText}`}
           >
             Gestionar método de pago / cancelar suscripción
           </button>
         </form>
       )}
 
-      <div className="mt-4 rounded-lg bg-rose-50 px-4 py-3 text-sm text-rose-700">
-        <p>
-          💡 Este mes llevas{" "}
-          <span className="font-semibold">
-            {materialsThisMonth} {materialsThisMonth === 1 ? "material" : "materiales"}
-          </span>{" "}
-          subidos. Cada uno rebaja {MATERIAL_DISCOUNT_PER_UPLOAD}€ el precio de
-          hoy de los planes Pro y Premium — ya se refleja abajo.{" "}
-          {materialsThisMonth === 0 && (
-            <>
-              <a href="/panel/materiales" className="underline">
-                Sube tu primer material
-              </a>{" "}
-              para empezar a ahorrar.
-            </>
-          )}
-        </p>
-        <p className="mt-2 font-medium">
-          ⚠️ El descuento no es fijo: cada renovación mensual se recalcula
-          sola según lo que subas ese mes. Si un mes no subes ningún
-          material, tu siguiente cuota vuelve al precio original del plan.
-        </p>
-      </div>
-
       <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-3">
         {PLANS.map((plan) => {
           const isCurrent = plan.id === teacherProfile.plan;
           const basePrice = getBasePrice(plan.id, teacherProfile);
-          const isFounderPrice = basePrice < plan.price;
+          const isFounderPrice = isFounderPriced(plan.id, teacherProfile);
           const freeAsFounderTrial = plan.id === "pro" && inFreeTrial;
-          const discountedPrice =
-            basePrice > 0 ? getDiscountedPrice(basePrice, materialsThisMonth) : 0;
-          const hasMaterialDiscount = discountedPrice < basePrice;
+          // El precio de fundador es fijo para siempre: no se le aplica el
+          // descuento por materiales, que solo existe para abaratar el
+          // precio normal (9,99€/19,99€) de quien no es fundador.
+          const discountedPrice = isFounderPrice
+            ? basePrice
+            : basePrice > 0
+              ? getDiscountedPrice(basePrice, materialsThisMonth)
+              : 0;
+          const hasMaterialDiscount = !isFounderPrice && discountedPrice < basePrice;
+
+          const isPremium = plan.id === "premium";
 
           return (
             <div
               key={plan.id}
-              className={`flex flex-col rounded-2xl border p-6 ${
+              className={`relative flex flex-col rounded-2xl border p-6 ${
                 isCurrent
-                  ? "border-teal-500 ring-2 ring-teal-500"
-                  : "border-stone-200"
+                  ? `${theme.borderStrong} ring-2 ${theme.ring}`
+                  : isPremium
+                    ? "border-violet-300"
+                    : "border-stone-200"
               } bg-white shadow-sm`}
             >
+              {isPremium && (
+                <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-500 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-white shadow-sm">
+                  ★ Máximo alcance
+                </span>
+              )}
               <h2 className="text-lg font-bold text-stone-900">{plan.name}</h2>
               <p className="mt-1 text-sm text-stone-500">{plan.description}</p>
               <div className="mt-4">
@@ -154,14 +151,14 @@ export default async function SuscripcionPage({
                 )}
                 {hasMaterialDiscount && (
                   <p className="text-xs font-medium text-rose-600">
-                    {isFounderPrice ? "+ " : ""}Descuento por materiales
+                    Descuento por materiales
                   </p>
                 )}
               </div>
               <ul className="mt-4 flex-1 space-y-2 text-sm text-stone-600">
                 {plan.features.map((feature) => (
                   <li key={feature} className="flex gap-2">
-                    <span className="text-teal-600">✓</span>
+                    <span className={isPremium ? "text-violet-600" : theme.accentText}>✓</span>
                     {feature}
                   </li>
                 ))}
@@ -176,7 +173,7 @@ export default async function SuscripcionPage({
                   <input type="hidden" name="plan" value={plan.id} />
                   <button
                     type="submit"
-                    className="w-full rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700"
+                    className={`w-full rounded-full px-4 py-2 text-sm font-semibold text-white shadow-md transition hover:shadow-lg ${theme.ctaGradient}`}
                   >
                     Elegir {plan.name}
                   </button>
@@ -186,6 +183,24 @@ export default async function SuscripcionPage({
           );
         })}
       </div>
-    </main>
+
+      <CommissionSimulator vertical={teacherProfile.vertical} />
+
+      <p className="mt-6 text-xs text-stone-400">
+        💡 Si pagas el precio normal de Pro o Premium (9,99€/19,99€ — es
+        decir, no tienes precio de fundador), aportar al menos un material{" "}
+        <span className="font-medium">aprobado</span> por un admin este mes
+        te rebaja {MATERIAL_DISCOUNT_PER_UPLOAD}€ fijos — da igual si subes uno o
+        varios, no se suma por cada uno. Se recalcula cada mes: si no subes
+        nada ese mes, la siguiente cuota vuelve al precio original. No
+        aplica si ya tienes el precio fijo de fundador. Este mes llevas{" "}
+        {materialsThisMonth} {materialsThisMonth === 1 ? "material aprobado" : "materiales aprobados"}.{" "}
+        {materialsThisMonth === 0 && (
+          <a href="/panel/materiales" className="underline">
+            Sube el primero
+          </a>
+        )}
+      </p>
+    </div>
   );
 }

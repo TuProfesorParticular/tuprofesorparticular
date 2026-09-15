@@ -22,11 +22,16 @@ export async function generateMetadata({
 }: PageProps): Promise<Metadata> {
   const { id } = await params;
   const teacher = await getTeacherProfileById(id);
+  if (!teacher) return { title: "Profesor no encontrado" };
+
+  const subjectNames = [...new Set(teacher.subjects.map((s) => s.subject.name))];
+  const description =
+    teacher.bio?.slice(0, 155) ||
+    `${teacher.user.name}${subjectNames.length > 0 ? ` · ${subjectNames.slice(0, 3).join(", ")}` : ""}${teacher.city ? ` en ${teacher.city}` : ""}. Contacta a través de TuProfesorParticular.`;
 
   return {
-    title: teacher
-      ? `${teacher.user.name} · TuProfesorParticular`
-      : "Profesor no encontrado",
+    title: `${teacher.user.name} · TuProfesorParticular`,
+    description,
   };
 }
 
@@ -92,8 +97,30 @@ export default async function TeacherProfilePage({ params, searchParams }: PageP
   const canAcceptBookings = teacher.stripeConnectOnboarded;
   const alreadyBooked = existingBooking?.status === "paid";
 
+  // Rich results en Google (estrellas en el resultado de búsqueda) cuando
+  // el profesor ya tiene alguna valoración.
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name: teacher.user.name,
+    ...(teacher.bio ? { description: teacher.bio } : {}),
+    ...(count > 0 && average !== null
+      ? {
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: average,
+            reviewCount: count,
+          },
+        }
+      : {}),
+  };
+
   return (
     <main className="mx-auto max-w-3xl px-4 py-10">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <Link href="/" className="text-sm text-teal-600 hover:underline">
         ← Volver a la búsqueda
       </Link>
@@ -105,8 +132,17 @@ export default async function TeacherProfilePage({ params, searchParams }: PageP
       )}
 
       <div className="mt-4 flex flex-col gap-6 rounded-xl border border-stone-200 bg-white p-6 shadow-sm sm:flex-row sm:items-start">
-        <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-full bg-stone-100 text-2xl font-semibold text-stone-500">
-          {teacher.user.name.charAt(0).toUpperCase()}
+        <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-stone-100 text-2xl font-semibold text-stone-500">
+          {teacher.user.avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={teacher.user.avatarUrl}
+              alt={teacher.user.name}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            teacher.user.name.charAt(0).toUpperCase()
+          )}
         </div>
 
         <div className="min-w-0 flex-1">
@@ -154,6 +190,12 @@ export default async function TeacherProfilePage({ params, searchParams }: PageP
                 {teacher.experienceText}
               </p>
             </div>
+          )}
+
+          {teacher.licenseNumber && (
+            <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
+              ✓ Nº de colegiado: {teacher.licenseNumber}
+            </p>
           )}
 
           <div className="mt-5">

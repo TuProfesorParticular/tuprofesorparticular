@@ -128,7 +128,7 @@ export default function NewRequestForm({ subjects }: { subjects: Subject[] }) {
       <button
         type="submit"
         disabled={isPending}
-        className="w-full rounded-lg bg-teal-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-700 disabled:opacity-60"
+        className="w-full rounded-full bg-gradient-to-r from-teal-600 to-emerald-500 px-4 py-2.5 text-sm font-semibold text-white shadow-md transition hover:from-teal-700 hover:to-emerald-600 hover:shadow-lg disabled:opacity-60"
       >
         {isPending ? "Publicando…" : "Publicar anuncio"}
       </button>

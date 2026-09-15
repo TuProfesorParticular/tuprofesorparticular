@@ -22,6 +22,7 @@ enum Modality {
 }
 
 enum Level {
+  infantil
   primaria
   eso
   bachillerato
@@ -38,6 +39,12 @@ enum Vertical {
 }
 
 enum TeacherStatus {
+  pending
+  approved
+  rejected
+}
+
+enum MaterialStatus {
   pending
   approved
   rejected
@@ -75,6 +82,11 @@ enum StudentRequestStatus {
 
 // Curso concreto al que corresponde un material (más granular que Level)
 enum MaterialCourse {
+  // "infantil" y "primaria" quedan obsoletos (no se ofrecen ya al subir un
+  // material) pero se mantienen en el enum por los materiales ya guardados
+  // con ese valor — ver infantil_1..3 y primaria_1..6 más abajo.
+  infantil
+  primaria
   eso_1
   eso_2
   eso_3
@@ -83,6 +95,72 @@ enum MaterialCourse {
   bachillerato_2
   universidad
   oposiciones
+  // Niveles del Marco Común Europeo de Referencia (MCER/CEFR), comunes a
+  // todas las certificaciones oficiales de idiomas (Cambridge, EOI, DELF/
+  // DALF, Goethe-Institut, CELI...) — para la categoría "Cursos oficiales".
+  a1
+  a2
+  b1
+  b2
+  c1
+  c2
+  // Segundo ciclo de Educación Infantil (LOMLOE), 3-6 años.
+  infantil_1
+  infantil_2
+  infantil_3
+  // Educación Primaria (LOMLOE), 6 cursos.
+  primaria_1
+  primaria_2
+  primaria_3
+  primaria_4
+  primaria_5
+  primaria_6
+  // Nivel de progresión, para las categorías de Deporte (Deportes de
+  // Combate, Raqueta, Equipo, Entrenamiento Personal, Yoga, Fitness y
+  // Bienestar Físico) — el equivalente a un "curso" cuando no hay niveles
+  // académicos.
+  principiante
+  intermedio
+  avanzado
+  // Tipo de recurso, para las categorías de Salud Mental (Psicología
+  // Clínica, Terapia de Pareja/Familiar, TCC, Coaching, Mindfulness,
+  // Psicopedagogía...).
+  guias_pacientes
+  casos_protocolos
+  tests_evaluacion
+  // Transversal a las tres ramas (Educación, Deporte, Salud Mental) y a
+  // todas sus categorías: programaciones didácticas, planes de
+  // entrenamiento o programas de intervención — se añade siempre junto al
+  // resto de cursos/niveles de cada categoría, no sustituye a ninguno.
+  programaciones
+}
+
+// Las 17 comunidades autónomas, para el envío de CV a colegios por zona
+enum SpanishRegion {
+  madrid
+  andalucia
+  cataluna
+  valencia
+  murcia
+  canarias
+  castilla_la_mancha
+  castilla_y_leon
+  galicia
+  aragon
+  extremadura
+  pais_vasco
+  asturias
+  cantabria
+  navarra
+  la_rioja
+  baleares
+}
+
+enum CvCampaignStatus {
+  pending // creada, esperando el pago
+  paid // pagada, pendiente de enviar los emails
+  sent // emails enviados a los colegios de la zona
+  failed // el pago se completó pero el envío falló (revisar en admin)
 }
 
 model User {
@@ -95,6 +173,14 @@ model User {
   avatarUrl     String?
   emailVerified DateTime?
   createdAt     DateTime   @default(now())
+
+  // Programa de referidos: quién invitó a este usuario a registrarse (link
+  // /registro?ref=<id del que invita>). Solo se usa entre profesores, para
+  // recompensar a quien trae a otro profesional a la plataforma (ver
+  // referralRewardGranted en TeacherProfile y setTeacherProfileStatus).
+  referredById String?
+  referredBy   User?   @relation("Referrals", fields: [referredById], references: [id], onDelete: SetNull)
+  referrals    User[]  @relation("Referrals")
 
   accounts            Account[]
   sessions            Session[]
@@ -109,6 +195,8 @@ model User {
   reviews              Review[]
   ethicsReports        EthicsReport[] @relation("EthicsReporter")
   studentRequests      StudentRequest[]
+  cvCampaigns          CvCampaign[]
+  suggestions          Suggestion[]   @relation("SuggestionAuthor")
 
   @@map("users")
 }
@@ -123,8 +211,17 @@ model TeacherProfile {
   city           String?
   postalCode     String?
   experienceText String?
+  // Nº de colegiado profesional — se muestra en el anuncio público para dar
+  // confianza, principalmente en la vertical Salud Mental (psicólogos,
+  // logopedas...), aunque no está restringido a nivel de base de datos.
+  licenseNumber  String?
   status         TeacherStatus @default(pending)
   createdAt      DateTime      @default(now())
+
+  // Ámbito profesional declarado al registrarse (Educación / Deporte / Salud
+  // Mental) — se usa sobre todo para repartir el cupo de "100 fundadores"
+  // por separado en cada ámbito, en vez de un único cupo global de 100.
+  vertical Vertical @default(educacion)
 
   // Suscripción (plan de visibilidad) — Stripe Billing
   plan                 TeacherPlan @default(free)
@@ -132,11 +229,24 @@ model TeacherProfile {
   stripeSubscriptionId String?     @unique
   subscriptionStatus   String?
 
-  // Programa "profesor fundador" (los 100 primeros): 3 meses de Pro gratis y
-  // después precio de fundador fijo para siempre (ver FOUNDER_PRICES).
+  // Programa "profesor fundador" (los 100 primeros DE CADA ámbito —
+  // Educación, Deporte y Salud Mental, por separado): 3 meses de Pro gratis
+  // y después precio de fundador fijo para siempre (ver FOUNDER_PRICES).
   isFounder          Boolean   @default(false)
   founderProUntil    DateTime?
   founderLockedPrice Decimal?  @db.Decimal(10, 2)
+
+  // Programa de referidos: si este profesor invitó a otro y ese otro fue
+  // aprobado, se le regalan 30 días de Pro gratis (reutilizando el mismo
+  // mecanismo de founderProUntil que el programa de fundadores, ver
+  // isInFounderFreeTrial). Este flag va en el perfil del profesor
+  // RECOMENDADO (no en el que invita), para no volver a dar la recompensa si
+  // el admin despublica y vuelve a publicar su anuncio más tarde.
+  referralRewardGranted Boolean @default(false)
+
+  // Resumen semanal por email (visitas, mensajes, valoraciones — ver
+  // /api/cron/weekly-digest). Desactivable desde "Mi cuenta".
+  weeklyDigestOptOut Boolean @default(false)
 
   // Cobro de la primera clase — Stripe Connect (cuenta del profesor)
   stripeConnectAccountId String? @unique
@@ -212,6 +322,29 @@ model EthicsReport {
   @@map("ethics_reports")
 }
 
+enum SuggestionCategory {
+  error
+  mejora
+  otro
+}
+
+// Apartado "Sugerencias" del panel (alumnos y profesores): errores o
+// propuestas de mejora que llegan directamente al administrador — se
+// guardan aquí y además se avisa por email (ver sendNewSuggestionEmail).
+model Suggestion {
+  id        String             @id @default(cuid())
+  userId    String
+  category  SuggestionCategory @default(otro)
+  message   String
+  status    EthicsReportStatus @default(open)
+  createdAt DateTime           @default(now())
+
+  user User @relation("SuggestionAuthor", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@map("suggestions")
+}
+
 // Reserva de la primera clase pagada a través de la plataforma (comisión del 20%)
 model Booking {
   id                      String        @id @default(cuid())
@@ -223,6 +356,8 @@ model Booking {
   stripeCheckoutSessionId String?       @unique
   stripePaymentIntentId   String?       @unique
   createdAt               DateTime      @default(now())
+  refundRequestedAt       DateTime?
+  refundReason            String?
 
   student        User           @relation(fields: [studentId], references: [id])
   teacherProfile TeacherProfile @relation(fields: [teacherProfileId], references: [id])
@@ -282,6 +417,9 @@ model Material {
   course           MaterialCourse
   fileUrl          String
   fileName         String
+  // Pendiente hasta que un admin lo revisa: solo se ve en la web y cuenta
+  // para el descuento por materiales una vez aprobado.
+  status           MaterialStatus @default(pending)
   createdAt        DateTime       @default(now())
 
   subject        Subject        @relation(fields: [subjectId], references: [id], onDelete: Cascade)
@@ -289,6 +427,7 @@ model Material {
 
   @@index([subjectId])
   @@index([course])
+  @@index([status])
   @@map("materials")
 }
 
@@ -387,4 +526,119 @@ model PasswordResetToken {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("password_reset_tokens")
+}
+
+// Analítica propia, de primera parte y anónima (sin cookies, id aleatorio en
+// localStorage del navegador) para el panel de administración: visitas,
+// visitantes únicos y tiempo en página. No se comparte con terceros.
+model PageView {
+  id         String   @id @default(cuid())
+  path       String
+  visitorId  String
+  durationMs Int?
+  createdAt  DateTime @default(now())
+
+  @@index([path])
+  @@index([createdAt])
+  @@index([visitorId])
+  @@map("page_views")
+}
+
+// Monitorización de errores propia (en vez de un servicio externo tipo
+// Sentry): captura errores no controlados del servidor vía
+// instrumentation.ts (onRequestError) para poder verlos en /admin/errores
+// sin depender de que un usuario los reporte.
+model ErrorLog {
+  id        String   @id @default(cuid())
+  message   String
+  stack     String?
+  path      String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@map("error_logs")
+}
+
+// Contacto de un colegio/instituto privado o concertado al que se le puede
+// enviar el CV de un profesor. Se rellena poco a poco desde /admin/colegios,
+// comunidad a comunidad, antes de habilitar el envío de pago para esa zona.
+// Centro al que se puede enviar un CV: colegio (Educación), gimnasio/club
+// (Deporte) o clínica/gabinete (Salud Mental) — un mismo modelo para las
+// tres verticales, distinguidas por el campo `vertical`.
+model InstitutionContact {
+  id           String        @id @default(cuid())
+  vertical     Vertical      @default(educacion)
+  name         String
+  region       SpanishRegion
+  email        String
+  province     String?
+  // Tipo de centro (Privado/Concertado, Gimnasio/Club, Clínica/Gabinete...),
+  // informativo, sin restricción
+  type         String?
+  // Si está desactivado o se ha dado de baja, se excluye de los envíos
+  // aunque siga en la base de datos (para no perder el registro).
+  active       Boolean       @default(true)
+  unsubscribed Boolean       @default(false)
+  createdAt    DateTime      @default(now())
+
+  @@index([vertical, region, active, unsubscribed])
+  @@map("institution_contacts")
+}
+
+// Compra de un profesional para que enviemos su CV a los centros de una
+// comunidad (o a toda España): colegios, gimnasios/clubes o clínicas/
+// gabinetes, según el ámbito (`vertical`) del profesional. Un pago único vía
+// Stripe Checkout; el pago solo da acceso — el profesional sube el CV y
+// confirma el envío después, desde /tu-cv/envios/[id] (ver
+// dispatchCvCampaign en src/lib/cv-campaigns.ts).
+model CvCampaign {
+  id     String @id @default(cuid())
+  userId String
+
+  // Ámbito del profesional en el momento de comprar (educación → colegios,
+  // deporte → gimnasios/clubes, salud_mental → clínicas/gabinetes).
+  vertical Vertical @default(educacion)
+
+  // Null cuando nationwide = true (cubre todas las comunidades)
+  region     SpanishRegion?
+  nationwide Boolean        @default(false)
+  // Provincias elegidas dentro de la comunidad (el precio es el mismo,
+  // pagar la comunidad da derecho a elegir cualquier subconjunto de sus
+  // provincias). Array vacío = todas las provincias de la comunidad. Cada
+  // valor debe coincidir con InstitutionContact.province para esa región.
+  provinces  String[]       @default([])
+  // Centros concretos que el profesional ha quitado a mano de la lista
+  // antes de confirmar el envío (aunque su provincia esté incluida).
+  excludedContactIds String[] @default([])
+
+  amount Decimal @db.Decimal(10, 2)
+
+  // Nulos hasta que el profesor los rellena tras el pago, en el paso de
+  // confirmación (/tu-cv/envios/[id]).
+  cvFileUrl  String?
+  cvFileName String?
+  // Mensaje/carta de presentación opcional que se incluye en el email
+  message    String?
+
+  // Carta de recomendación opcional (PDF/Word) y referencias en texto que
+  // el profesional añade en el paso de confirmación, junto con el CV. Se
+  // incluyen en el mismo correo que reciben los centros.
+  recommendationFileUrl  String?
+  recommendationFileName String?
+  referencesText         String?
+
+  status                  CvCampaignStatus @default(pending)
+  stripeCheckoutSessionId String?          @unique
+
+  sentCount   Int @default(0)
+  failedCount Int @default(0)
+
+  createdAt DateTime  @default(now())
+  sentAt    DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([userId])
+  @@map("cv_campaigns")
 }

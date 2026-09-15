@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
-import { getBasePrice, getDiscountedPrice } from "@/lib/plans";
+import { getBasePrice, getDiscountedPrice, isFounderPriced } from "@/lib/plans";
 import { getPreviousMonthMaterialCount } from "@/lib/materials";
 
 // Se ejecuta una vez al mes (ver vercel.json): recalcula el precio de cada
@@ -54,8 +54,15 @@ export async function GET(request: Request) {
       teacherProfile.founderLockedPrice != null
         ? Number(teacherProfile.founderLockedPrice)
         : getBasePrice(teacherProfile.plan, teacherProfile);
+    // El precio de fundador es fijo para siempre — el descuento por
+    // materiales solo se aplica al precio normal.
+    const founderPriced =
+      teacherProfile.founderLockedPrice != null ||
+      isFounderPriced(teacherProfile.plan, teacherProfile);
     const materialsLastMonth = await getPreviousMonthMaterialCount(teacherProfile.id);
-    const newPrice = getDiscountedPrice(basePrice, materialsLastMonth);
+    const newPrice = founderPriced
+      ? basePrice
+      : getDiscountedPrice(basePrice, materialsLastMonth);
 
     const subscription = await stripe.subscriptions.retrieve(
       teacherProfile.stripeSubscriptionId,

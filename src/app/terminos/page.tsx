@@ -64,7 +64,7 @@ export default function TerminosPage() {
       <LegalSection title="4. Planes de pago para profesionales">
         <p>
           Publicar un anuncio y contactar con alumnos es gratuito (plan
-          Gratis). Los planes Pro y Premium son suscripciones mensuales de
+          Básico). Los planes Pro y Premium son suscripciones mensuales de
           pago, gestionadas a través de Stripe, que amplían el número de
           materias y la visibilidad del anuncio. Puedes cancelar la
           suscripción en cualquier momento desde tu panel; la cancelación
@@ -80,7 +80,8 @@ export default function TerminosPage() {
 
       <LegalSection title="5. Programa de profesor fundador">
         <p>
-          Los primeros {FOUNDER_LIMIT} profesionales que se registran acceden
+          Los primeros {FOUNDER_LIMIT} profesionales que se registran en cada
+          categoría (Educación, Deporte y Salud Mental, por separado) acceden
           al plan Pro gratis durante 3 meses. Pasado ese periodo, si
           continúan activos, su cuota queda fijada de forma permanente en{" "}
           {FOUNDER_PRICES.pro}€/mes en Pro o {FOUNDER_PRICES.premium}€/mes en
@@ -106,7 +107,26 @@ export default function TerminosPage() {
         </p>
       </LegalSection>
 
-      <LegalSection title="7. Disponibilidad semanal">
+      <LegalSection title="7. Cancelación y reembolso de la primera clase">
+        <p>
+          El alumno puede solicitar el reembolso del importe pagado por la
+          primera clase, desde &ldquo;Mis reservas&rdquo;, cuando esa clase
+          todavía no se haya llegado a celebrar — por ejemplo, si el
+          profesional no responde en un plazo razonable o si finalmente no
+          llegáis a acordar la cita. El plazo para solicitarlo es de 30 días
+          naturales desde el pago.
+        </p>
+        <p>
+          Cada solicitud la revisa el equipo de TuProfesorParticular de forma
+          individual. Si se aprueba, se devuelve el importe íntegro
+          (incluida la comisión de la plataforma) al medio de pago original,
+          normalmente en un plazo de hasta 10 días hábiles. Una vez celebrada
+          la primera clase, se considera que el servicio de intermediación se
+          ha prestado y no procede el reembolso.
+        </p>
+      </LegalSection>
+
+      <LegalSection title="8. Disponibilidad semanal">
         <p>
           La rejilla de disponibilidad que cada profesional puede rellenar en
           su perfil es orientativa: informa de los horarios habituales en los
@@ -116,7 +136,7 @@ export default function TerminosPage() {
         </p>
       </LegalSection>
 
-      <LegalSection title="8. Materiales y contenido subido por los usuarios">
+      <LegalSection title="9. Materiales y contenido subido por los usuarios">
         <p>
           Cada usuario es el único responsable del contenido que publica
           (materiales, presentación, foto de perfil, mensajes) y garantiza
@@ -133,7 +153,7 @@ export default function TerminosPage() {
         </p>
       </LegalSection>
 
-      <LegalSection title="9. Canal ético">
+      <LegalSection title="10. Canal ético">
         <p>
           Cualquier usuario puede reportar de forma confidencial, a través
           del{" "}
@@ -147,7 +167,7 @@ export default function TerminosPage() {
         </p>
       </LegalSection>
 
-      <LegalSection title="10. Conducta prohibida">
+      <LegalSection title="11. Conducta prohibida">
         <ul className="list-disc space-y-1 pl-5">
           <li>Publicar información falsa sobre tu identidad o formación.</li>
           <li>Acosar, discriminar o amenazar a otros usuarios.</li>
@@ -163,7 +183,7 @@ export default function TerminosPage() {
         </ul>
       </LegalSection>
 
-      <LegalSection title="11. Suspensión y baja">
+      <LegalSection title="12. Suspensión y baja">
         <p>
           Podemos suspender o cancelar una cuenta que incumpla estos
           términos, sin perjuicio de otras acciones que correspondan. El
@@ -172,7 +192,7 @@ export default function TerminosPage() {
         </p>
       </LegalSection>
 
-      <LegalSection title="12. Limitación de responsabilidad">
+      <LegalSection title="13. Limitación de responsabilidad">
         <p>
           TuProfesorParticular no garantiza la disponibilidad ininterrumpida
           del servicio ni es responsable de los acuerdos, pagos o
@@ -181,7 +201,7 @@ export default function TerminosPage() {
         </p>
       </LegalSection>
 
-      <LegalSection title="13. Modificaciones">
+      <LegalSection title="14. Modificaciones">
         <p>
           Podemos actualizar estos términos para reflejar cambios en el
           servicio o en la normativa aplicable. Los cambios relevantes se
@@ -189,12 +209,12 @@ export default function TerminosPage() {
         </p>
       </LegalSection>
 
-      <LegalSection title="14. Ley aplicable y contacto">
+      <LegalSection title="15. Ley aplicable y contacto">
         <p>
           Estos términos se rigen por la legislación española. Para
           cualquier duda, puedes escribir a{" "}
-          <a href="mailto:legal@tuprofesorparticular.com" className="text-teal-600 hover:underline">
-            legal@tuprofesorparticular.com
+          <a href="mailto:contacto@tuprofesorparticular.es" className="text-teal-600 hover:underline">
+            contacto@tuprofesorparticular.es
           </a>
           .
         </p>

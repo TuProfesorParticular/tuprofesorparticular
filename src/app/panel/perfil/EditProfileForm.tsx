@@ -1,8 +1,8 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState, type ChangeEvent } from "react";
 import type { Subject, TeacherProfile } from "@prisma/client";
-import { LEVEL_LABELS, LEVEL_ORDER, MODALITY_LABELS } from "@/lib/constants";
+import { LEVEL_LABELS, LEVEL_ORDER, MODALITY_LABELS, VERTICAL_THEME } from "@/lib/constants";
 import { updateTeacherProfile, type EditProfileState } from "./actions";
 import AvailabilityGrid from "./AvailabilityGrid";
 
@@ -13,6 +13,7 @@ const inputClass =
 
 type EditProfileFormProps = {
   teacherProfile: Omit<TeacherProfile, "pricePerHour"> & { pricePerHour: number };
+  avatarUrl: string | null;
   allSubjects: Subject[];
   selectedSubjectIds: string[];
   selectedLevels: string[];
@@ -21,6 +22,7 @@ type EditProfileFormProps = {
 
 export default function EditProfileForm({
   teacherProfile,
+  avatarUrl,
   allSubjects,
   selectedSubjectIds,
   selectedLevels,
@@ -29,6 +31,25 @@ export default function EditProfileForm({
   const [state, formAction, isPending] = useActionState(
     updateTeacherProfile,
     initialState,
+  );
+  const [selectedIds, setSelectedIds] = useState<string[]>(selectedSubjectIds);
+  // Vista previa de la foto de perfil: arranca con la que ya hay guardada
+  // (si hay) y se actualiza al momento al elegir un archivo nuevo, antes
+  // incluso de guardar el formulario.
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(avatarUrl);
+  const theme = VERTICAL_THEME[teacherProfile.vertical];
+
+  function handleAvatarChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setAvatarPreview(reader.result as string);
+    reader.readAsDataURL(file);
+  }
+
+  const subjectVerticalById = new Map(allSubjects.map((s) => [s.id, s.vertical]));
+  const showLicenseField = selectedIds.some(
+    (id) => subjectVerticalById.get(id) === "salud_mental",
   );
 
   const subjectsByCategory: [string, Subject[]][] = [];
@@ -47,13 +68,32 @@ export default function EditProfileForm({
         <label htmlFor="avatar" className="block text-sm font-medium text-stone-700">
           Foto de perfil
         </label>
-        <input
-          id="avatar"
-          name="avatar"
-          type="file"
-          accept="image/*"
-          className="mt-1 block w-full text-sm text-stone-600"
-        />
+        <p className="mt-0.5 text-xs text-stone-400">
+          Se ve en tu anuncio público y en los resultados de búsqueda. Los
+          anuncios con foto generan más confianza.
+        </p>
+        <div className="mt-2 flex items-center gap-4">
+          <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-stone-100 text-3xl text-stone-400">
+            {avatarPreview ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={avatarPreview}
+                alt="Vista previa de tu foto de perfil"
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              "👤"
+            )}
+          </div>
+          <input
+            id="avatar"
+            name="avatar"
+            type="file"
+            accept="image/*"
+            onChange={handleAvatarChange}
+            className="block w-full text-sm text-stone-600 file:mr-4 file:rounded-lg file:border-0 file:bg-teal-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-teal-700 hover:file:bg-teal-100"
+          />
+        </div>
       </div>
 
       <div>
@@ -83,6 +123,9 @@ export default function EditProfileForm({
           multiple
           size={8}
           defaultValue={selectedSubjectIds}
+          onChange={(e) =>
+            setSelectedIds(Array.from(e.target.selectedOptions, (o) => o.value))
+          }
           className={inputClass}
         >
           {subjectsByCategory.map(([category, subjects]) => (
@@ -209,6 +252,27 @@ export default function EditProfileForm({
         />
       </div>
 
+      {showLicenseField && (
+        <div>
+          <label htmlFor="licenseNumber" className="block text-sm font-medium text-stone-700">
+            Número de colegiado
+          </label>
+          <p className="mt-0.5 text-xs text-stone-400">
+            Se muestra en tu anuncio público para dar confianza a los
+            alumnos. Déjalo vacío si no aplica en tu caso.
+          </p>
+          <input
+            id="licenseNumber"
+            name="licenseNumber"
+            type="text"
+            maxLength={60}
+            defaultValue={teacherProfile.licenseNumber ?? ""}
+            placeholder="ej. M-12345"
+            className={inputClass}
+          />
+        </div>
+      )}
+
       {state.error && (
         <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
           {state.error}
@@ -223,7 +287,7 @@ export default function EditProfileForm({
       <button
         type="submit"
         disabled={isPending}
-        className="rounded-lg bg-teal-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-teal-700 disabled:opacity-60"
+        className={`rounded-full px-6 py-2.5 text-sm font-semibold text-white shadow-md transition hover:shadow-lg disabled:opacity-60 ${theme.ctaGradient}`}
       >
         {isPending ? "Guardando…" : "Guardar cambios"}
       </button>

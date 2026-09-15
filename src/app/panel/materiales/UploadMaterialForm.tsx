@@ -1,8 +1,8 @@
 "use client";
 
-import { useActionState, useRef, useEffect } from "react";
+import { useActionState, useRef, useEffect, useState } from "react";
 import type { Subject } from "@prisma/client";
-import { MATERIAL_COURSE_LABELS, MATERIAL_COURSE_ORDER } from "@/lib/constants";
+import { MATERIAL_COURSE_LABELS, getCoursesForCategory } from "@/lib/constants";
 import { uploadMaterial, type UploadMaterialState } from "./actions";
 
 const initialState: UploadMaterialState = {};
@@ -13,15 +13,33 @@ const fieldClass =
 export default function UploadMaterialForm({ subjects }: { subjects: Subject[] }) {
   const [state, formAction, isPending] = useActionState(uploadMaterial, initialState);
   const formRef = useRef<HTMLFormElement>(null);
+  const [subjectId, setSubjectId] = useState("");
+
+  // Los cursos disponibles dependen de la categoría de la materia elegida
+  // (1º ESO... para las académicas, A1... C2 para Cursos oficiales, etc.) —
+  // así no se puede subir, p.ej., un material de "Inglés (Cambridge)" con
+  // curso "2º Bachillerato".
+  const selectedSubject = subjects.find((s) => s.id === subjectId);
+  const courseOptions = selectedSubject
+    ? getCoursesForCategory(selectedSubject.category)
+    : [];
 
   useEffect(() => {
     if (state.success) {
+      // form.reset() dispara el evento nativo "reset", que es donde
+      // sincronizamos subjectId — así el setState ocurre en el manejador de
+      // evento, no directamente dentro del efecto.
       formRef.current?.reset();
     }
   }, [state.success]);
 
   return (
-    <form ref={formRef} action={formAction} className="space-y-4">
+    <form
+      ref={formRef}
+      action={formAction}
+      onReset={() => setSubjectId("")}
+      className="space-y-4"
+    >
       <div>
         <label htmlFor="title" className="block text-sm font-medium text-stone-700">
           Título
@@ -33,7 +51,14 @@ export default function UploadMaterialForm({ subjects }: { subjects: Subject[] }
         <label htmlFor="subjectId" className="block text-sm font-medium text-stone-700">
           Materia
         </label>
-        <select id="subjectId" name="subjectId" required className={fieldClass}>
+        <select
+          id="subjectId"
+          name="subjectId"
+          required
+          value={subjectId}
+          onChange={(e) => setSubjectId(e.target.value)}
+          className={fieldClass}
+        >
           <option value="">Selecciona una materia</option>
           {subjects.map((subject) => (
             <option key={subject.id} value={subject.id}>
@@ -47,9 +72,18 @@ export default function UploadMaterialForm({ subjects }: { subjects: Subject[] }
         <label htmlFor="course" className="block text-sm font-medium text-stone-700">
           Curso
         </label>
-        <select id="course" name="course" required className={fieldClass}>
-          <option value="">Selecciona un curso</option>
-          {MATERIAL_COURSE_ORDER.map((course) => (
+        <select
+          key={subjectId}
+          id="course"
+          name="course"
+          required
+          disabled={!selectedSubject}
+          className={`${fieldClass} disabled:cursor-not-allowed disabled:bg-stone-100 disabled:text-stone-400`}
+        >
+          <option value="">
+            {selectedSubject ? "Selecciona un curso" : "Elige antes una materia"}
+          </option>
+          {courseOptions.map((course) => (
             <option key={course} value={course}>
               {MATERIAL_COURSE_LABELS[course]}
             </option>
@@ -96,7 +130,7 @@ export default function UploadMaterialForm({ subjects }: { subjects: Subject[] }
       <button
         type="submit"
         disabled={isPending}
-        className="w-full rounded-lg bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-rose-700 disabled:opacity-60"
+        className="w-full rounded-full bg-gradient-to-r from-rose-600 to-orange-500 px-4 py-2.5 text-sm font-semibold text-white shadow-md transition hover:from-rose-700 hover:to-orange-600 hover:shadow-lg disabled:opacity-60"
       >
         {isPending ? "Subiendo…" : "Subir material"}
       </button>

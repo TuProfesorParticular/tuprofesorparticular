@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { requireRole } from "@/lib/auth-helpers";
 import { getAllSubjects } from "@/lib/teachers";
 import { getStudentRequestsForStudent } from "@/lib/studentRequests";
@@ -20,20 +19,14 @@ export default async function MisAnunciosPage() {
   ]);
 
   return (
-    <main className="mx-auto max-w-2xl px-4 py-10">
-      <div className="flex flex-wrap gap-4 text-sm">
-        <Link href="/panel/mensajes" className="text-teal-600 hover:underline">
-          Mensajes
-        </Link>
-      </div>
-
-      <h1 className="mt-2 text-2xl font-bold text-stone-900">Mis anuncios</h1>
+    <div className="mx-auto max-w-2xl">
+      <h1 className="text-2xl font-bold text-stone-900">Mis anuncios</h1>
       <p className="mt-1 text-sm text-stone-500">
         Publica lo que necesitas y deja que los profesores te contacten a ti,
         en vez de buscar uno por uno.
       </p>
 
-      <div className="mt-6 rounded-xl border border-stone-200 bg-white p-6 shadow-sm">
+      <div className="mt-6 rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
         <NewRequestForm subjects={subjects} />
       </div>
 
@@ -96,6 +89,6 @@ export default async function MisAnunciosPage() {
           )}
         </ul>
       </div>
-    </main>
+    </div>
   );
 }

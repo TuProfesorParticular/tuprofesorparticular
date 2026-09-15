@@ -5,7 +5,14 @@ export const metadata: Metadata = {
   title: "Crear cuenta · TuProfesorParticular",
 };
 
-export default function RegistroPage() {
+export default async function RegistroPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ ref?: string; role?: string }>;
+}) {
+  const { ref, role } = await searchParams;
+  const defaultRole = role === "teacher" ? "teacher" : "student";
+
   return (
     <main className="mx-auto max-w-md px-4 py-12">
       <h1 className="text-2xl font-bold text-stone-900">Crear cuenta</h1>
@@ -14,7 +21,7 @@ export default function RegistroPage() {
         profesor para publicar tu anuncio.
       </p>
 
-      <RegisterForm />
+      <RegisterForm referralId={ref} defaultRole={defaultRole} />
     </main>
   );
 }

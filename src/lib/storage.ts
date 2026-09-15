@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 
 const AVATARS_BUCKET = "avatars";
 const MATERIALS_BUCKET = "materials";
+const CVS_BUCKET = "cvs";
 
 const supabaseAdmin =
   process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -71,4 +72,38 @@ export async function deleteMaterialFile(fileUrl: string) {
   if (index === -1) return;
   const path = decodeURIComponent(fileUrl.slice(index + marker.length));
   await supabase.storage.from(MATERIALS_BUCKET).remove([path]);
+}
+
+// Archivos que un profesional sube para que los enviemos a los centros de
+// una comunidad (colegios, gimnasios/clubes o clínicas/gabinetes según su
+// ámbito — ver CvCampaign): su CV y, opcionalmente, una carta de
+// recomendación. Requiere el bucket "cvs" creado en Supabase Storage
+// (público, igual que "materials").
+async function uploadToCvsBucket(
+  userId: string,
+  file: File,
+  prefix: string,
+): Promise<{ fileUrl: string; fileName: string }> {
+  const supabase = requireSupabase();
+
+  const path = `${userId}/${prefix}-${Date.now()}-${safePathSegment(file.name)}`;
+
+  const { error } = await supabase.storage
+    .from(CVS_BUCKET)
+    .upload(path, file, { contentType: file.type, upsert: false });
+
+  if (error) {
+    throw new Error(`Error subiendo el archivo: ${error.message}`);
+  }
+
+  const { data } = supabase.storage.from(CVS_BUCKET).getPublicUrl(path);
+  return { fileUrl: data.publicUrl, fileName: file.name };
+}
+
+export function uploadCvFile(userId: string, file: File) {
+  return uploadToCvsBucket(userId, file, "cv");
+}
+
+export function uploadRecommendationLetter(userId: string, file: File) {
+  return uploadToCvsBucket(userId, file, "recomendacion");
 }

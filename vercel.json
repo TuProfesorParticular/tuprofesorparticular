@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/monthly-repricing",
       "schedule": "0 6 1 * *"
+    },
+    {
+      "path": "/api/cron/weekly-digest",
+      "schedule": "0 8 * * 1"
     }
   ]
 }

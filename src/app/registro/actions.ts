@@ -3,10 +3,15 @@
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
+import type { Vertical } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { generateToken } from "@/lib/tokens";
 import { sendVerificationEmail } from "@/lib/mailer";
 import { FOUNDER_LIMIT, addFounderTrialMonths } from "@/lib/plans";
+import { VERTICALS, DEFAULT_VERTICAL } from "@/lib/constants";
+import { isLikelyBot } from "@/lib/antispam";
+
+const VERTICAL_SLUGS = VERTICALS.map((v) => v.slug) as [string, ...string[]];
 
 const registerSchema = z.object({
   name: z.string().min(2, "Introduce tu nombre completo"),
@@ -15,6 +20,8 @@ const registerSchema = z.object({
   role: z.enum(["student", "teacher"], {
     message: "Selecciona si eres alumno o profesor",
   }),
+  vertical: z.enum(VERTICAL_SLUGS).optional(),
+  ref: z.string().optional(),
   acceptTerms: z.literal("on", {
     message: "Debes aceptar los Términos y la Política de Privacidad",
   }),
@@ -28,11 +35,17 @@ export async function registerUser(
   _prevState: RegisterState,
   formData: FormData,
 ): Promise<RegisterState> {
+  if (isLikelyBot(formData)) {
+    return { error: "No se ha podido procesar el registro. Inténtalo de nuevo." };
+  }
+
   const parsed = registerSchema.safeParse({
     name: formData.get("name"),
     email: formData.get("email"),
     password: formData.get("password"),
     role: formData.get("role"),
+    vertical: formData.get("vertical") || undefined,
+    ref: formData.get("ref") || undefined,
     acceptTerms: formData.get("acceptTerms"),
   });
 
@@ -40,7 +53,8 @@ export async function registerUser(
     return { error: parsed.error.issues[0]?.message ?? "Datos inválidos" };
   }
 
-  const { name, email, password, role } = parsed.data;
+  const { name, email, password, role, ref } = parsed.data;
+  const vertical = (parsed.data.vertical ?? DEFAULT_VERTICAL) as Vertical;
 
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
@@ -49,10 +63,25 @@ export async function registerUser(
 
   const passwordHash = await bcrypt.hash(password, 10);
 
+  // Programa de referidos: solo cuenta entre profesores (ver
+  // REFERRAL_REWARD_DAYS) — un link con ?ref=<id> a un alumno no hace nada.
+  let referredById: string | undefined;
+  if (role === "teacher" && ref) {
+    const referrer = await prisma.user.findUnique({
+      where: { id: ref },
+      select: { id: true, role: true },
+    });
+    if (referrer && referrer.role === "teacher") {
+      referredById = referrer.id;
+    }
+  }
+
+  // El cupo de "100 fundadores" es independiente por ámbito (Educación,
+  // Deporte, Salud Mental) — no un único cupo global de 100.
   let isFounder = false;
   if (role === "teacher") {
     const founderCount = await prisma.teacherProfile.count({
-      where: { isFounder: true },
+      where: { isFounder: true, vertical },
     });
     isFounder = founderCount < FOUNDER_LIMIT;
   }
@@ -63,6 +92,7 @@ export async function registerUser(
       email,
       passwordHash,
       role,
+      ...(referredById ? { referredById } : {}),
       ...(role === "teacher"
         ? {
             teacherProfile: {
@@ -70,6 +100,7 @@ export async function registerUser(
                 pricePerHour: 0,
                 modality: "online",
                 status: "pending",
+                vertical,
                 ...(isFounder
                   ? {
                       isFounder: true,

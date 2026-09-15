@@ -24,20 +24,22 @@ export default async function MisMaterialesPage() {
   ]);
 
   return (
-    <main className="mx-auto max-w-2xl px-4 py-10">
+    <div className="mx-auto max-w-2xl">
       <h1 className="text-2xl font-bold text-stone-900">Mis materiales</h1>
       <p className="mt-1 text-sm text-stone-500">
-        Comparte apuntes, ejercicios o guías con los alumnos. Se publican en la sección{" "}
-        <span className="font-medium">Materiales</span>, agrupados por materia.
+        Comparte apuntes, ejercicios o guías con los alumnos. Un administrador
+        los revisa antes de publicarlos en la sección{" "}
+        <span className="font-medium">Materiales</span>. Solo cuentan para el
+        descuento de tu plan una vez aprobados.
       </p>
 
-      <div className="mt-6 rounded-xl border border-stone-200 bg-white p-6 shadow-sm">
+      <div className="mt-6 rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
         <UploadMaterialForm subjects={subjects} />
       </div>
 
       <div className="mt-8">
         <h2 className="text-sm font-semibold text-stone-900">
-          Materiales publicados ({materials.length})
+          Mis materiales ({materials.length})
         </h2>
         <ul className="mt-3 space-y-2">
           {materials.map((material) => (
@@ -51,6 +53,21 @@ export default async function MisMaterialesPage() {
                   {material.subject.name} · {MATERIAL_COURSE_LABELS[material.course]}
                 </p>
               </div>
+              <span
+                className={`ml-3 flex-shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${
+                  material.status === "approved"
+                    ? "bg-emerald-50 text-emerald-700"
+                    : material.status === "rejected"
+                      ? "bg-red-50 text-red-700"
+                      : "bg-amber-50 text-amber-700"
+                }`}
+              >
+                {material.status === "approved"
+                  ? "Aprobado"
+                  : material.status === "rejected"
+                    ? "Rechazado"
+                    : "Pendiente"}
+              </span>
               <form action={deleteMaterial}>
                 <input type="hidden" name="materialId" value={material.id} />
                 <button
@@ -69,6 +86,6 @@ export default async function MisMaterialesPage() {
           )}
         </ul>
       </div>
-    </main>
+    </div>
   );
 }

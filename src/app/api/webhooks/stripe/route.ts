@@ -4,6 +4,7 @@ import { stripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
 import type { TeacherPlan } from "@prisma/client";
 import { FOUNDER_PRICES } from "@/lib/plans";
+import { sendBookingConfirmedEmails } from "@/lib/mailer";
 
 export async function POST(request: Request) {
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -33,17 +34,10 @@ export async function POST(request: Request) {
     case "checkout.session.completed": {
       const session = event.data.object as Stripe.Checkout.Session;
 
-      if (session.mode === "payment") {
-        await prisma.booking.updateMany({
-          where: { stripeCheckoutSessionId: session.id },
-          data: {
-            status: "paid",
-            stripePaymentIntentId:
-              typeof session.payment_intent === "string"
-                ? session.payment_intent
-                : session.payment_intent?.id,
-          },
-        });
+      if (session.mode === "payment" && session.metadata?.type === "cv_campaign") {
+        await handleCvCampaignPaid(session);
+      } else if (session.mode === "payment") {
+        await handleBookingPaid(session);
       }
 
       if (session.mode === "subscription") {
@@ -112,4 +106,63 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json({ received: true });
+}
+
+// Al confirmarse el pago de la primera clase: se marca la reserva como
+// pagada y se avisa por email tanto al alumno (recibo) como al profesional
+// (aviso de nueva reserva) — antes de esto, un pago real no generaba
+// ningún correo de confirmación.
+async function handleBookingPaid(session: Stripe.Checkout.Session) {
+  const booking = await prisma.booking.findFirst({
+    where: { stripeCheckoutSessionId: session.id },
+    include: {
+      student: { select: { name: true, email: true } },
+      teacherProfile: { include: { user: { select: { name: true, email: true } } } },
+    },
+  });
+  if (!booking || booking.status === "paid") return;
+
+  await prisma.booking.update({
+    where: { id: booking.id },
+    data: {
+      status: "paid",
+      stripePaymentIntentId:
+        typeof session.payment_intent === "string"
+          ? session.payment_intent
+          : session.payment_intent?.id,
+    },
+  });
+
+  try {
+    await sendBookingConfirmedEmails({
+      studentName: booking.student.name,
+      studentEmail: booking.student.email,
+      teacherName: booking.teacherProfile.user.name,
+      teacherEmail: booking.teacherProfile.user.email,
+      amount: Number(booking.amount),
+      platformFeeAmount: Number(booking.platformFeeAmount),
+      teacherProfileId: booking.teacherProfileId,
+    });
+  } catch {
+    // No bloquea el webhook: la reserva ya ha quedado pagada aunque falle
+    // el email de confirmación.
+  }
+}
+
+// Al confirmarse el pago de un envío de CV, solo lo marca como pagado — el
+// profesional todavía tiene que subir su CV y confirmar a qué centros se
+// envía desde su panel (ver /tu-cv/envios/[id]).
+async function handleCvCampaignPaid(session: Stripe.Checkout.Session) {
+  const cvCampaignId = session.metadata?.cvCampaignId;
+  if (!cvCampaignId) return;
+
+  const campaign = await prisma.cvCampaign.findUnique({
+    where: { id: cvCampaignId },
+  });
+  if (!campaign || campaign.status !== "pending") return;
+
+  await prisma.cvCampaign.update({
+    where: { id: campaign.id },
+    data: { status: "paid" },
+  });
 }

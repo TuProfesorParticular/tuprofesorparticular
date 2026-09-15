@@ -1,8 +1,24 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { logout } from "@/app/actions";
 import MobileMenu from "./MobileMenu";
 import Logo from "./Logo";
+import TuCvNavLink from "./TuCvNavLink";
+
+// Fallback estático mientras se resuelve el Suspense de TuCvNavLink (lee
+// el query param ?ambito= actual, así que necesita ser cliente) — mismo
+// aspecto que el color por defecto (Educación) para que no haya parpadeo.
+function TuCvNavLinkFallback() {
+  return (
+    <Link
+      href="/tu-cv"
+      className="rounded-full bg-gradient-to-r from-teal-600 to-emerald-500 px-4 py-1.5 text-white shadow-sm transition hover:shadow-md"
+    >
+      Tu CV
+    </Link>
+  );
+}
 
 export default async function Navbar() {
   const session = await auth();
@@ -16,11 +32,20 @@ export default async function Navbar() {
         </Link>
 
         <div className="hidden items-center gap-4 text-sm font-medium sm:flex">
+          <Suspense fallback={<TuCvNavLinkFallback />}>
+            <TuCvNavLink />
+          </Suspense>
           <Link href="/" className="text-stone-600 hover:text-stone-900">
             Buscar profesores
           </Link>
           <Link href="/materiales" className="text-stone-600 hover:text-stone-900">
             Materiales
+          </Link>
+          <Link
+            href="/preguntas-frecuentes"
+            className="text-stone-600 hover:text-stone-900"
+          >
+            Ayuda
           </Link>
 
           {isLoggedIn ? (

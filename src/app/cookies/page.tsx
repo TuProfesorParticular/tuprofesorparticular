@@ -7,7 +7,7 @@ export const metadata: Metadata = {
 
 export default function CookiesPage() {
   return (
-    <LegalLayout title="Política de Cookies" updated="24 de agosto de 2026">
+    <LegalLayout title="Política de Cookies" updated="26 de agosto de 2026">
       <LegalSection title="1. Qué son las cookies">
         <p>
           Las cookies son pequeños archivos que un sitio web guarda en tu
@@ -18,9 +18,10 @@ export default function CookiesPage() {
 
       <LegalSection title="2. Qué cookies usa TuProfesorParticular">
         <p>
-          Ahora mismo solo usamos cookies técnicas, estrictamente necesarias
-          para que la plataforma funcione. No usamos cookies de analítica ni
-          de publicidad.
+          Usamos cookies técnicas, estrictamente necesarias para que la
+          plataforma funcione, y una analítica propia y anónima (ver sección
+          3). No usamos cookies de publicidad ni compartimos datos con
+          terceros con fines publicitarios.
         </p>
         <div className="overflow-x-auto rounded-lg border border-stone-200">
           <table className="w-full text-left text-sm">
@@ -63,7 +64,40 @@ export default function CookiesPage() {
         </p>
       </LegalSection>
 
-      <LegalSection title="3. Cómo gestionar las cookies">
+      <LegalSection title="3. Analítica propia (medición de audiencia)">
+        <p>
+          Para saber cuánta gente visita la plataforma, qué páginas se
+          consultan más y cuánto tiempo se pasa en ellas, usamos una
+          herramienta de analítica propia (no de un tercero como Google
+          Analytics). Funciona así:
+        </p>
+        <ul className="list-disc space-y-1 pl-5">
+          <li>
+            No usa cookies: guarda un identificador aleatorio en el
+            almacenamiento local de tu navegador (localStorage), sin ningún
+            dato que te identifique (ni nombre, ni email, ni IP asociada).
+          </li>
+          <li>
+            Los datos solo los usamos nosotros, de forma agregada
+            (visitas por día, páginas más vistas, tiempo medio en página).
+            Nunca se ceden ni se venden a terceros, ni se usan con fines
+            publicitarios.
+          </li>
+          <li>
+            Al ser una medición de audiencia propia y anónima, no requiere tu
+            consentimiento previo, según el criterio de la Agencia Española
+            de Protección de Datos (AEPD) para este tipo de analítica.
+          </li>
+        </ul>
+        <p>
+          Si prefieres no participar, puedes borrar el almacenamiento local
+          de tu navegador para este sitio, o navegar con las cookies/el
+          almacenamiento de sitios bloqueado en la configuración de tu
+          navegador.
+        </p>
+      </LegalSection>
+
+      <LegalSection title="4. Cómo gestionar las cookies">
         <p>
           Puedes eliminar o bloquear las cookies desde la configuración de
           tu navegador. Ten en cuenta que, si bloqueas la cookie de sesión,
@@ -71,11 +105,11 @@ export default function CookiesPage() {
         </p>
       </LegalSection>
 
-      <LegalSection title="4. Cambios futuros">
+      <LegalSection title="5. Cambios futuros">
         <p>
-          Si en el futuro incorporamos cookies de analítica o de marketing,
-          actualizaremos esta política y pediremos tu consentimiento antes
-          de activarlas.
+          Si en el futuro incorporamos cookies de publicidad o cedemos datos
+          de analítica a un tercero, actualizaremos esta política y
+          pediremos tu consentimiento antes de activarlas.
         </p>
       </LegalSection>
     </LegalLayout>

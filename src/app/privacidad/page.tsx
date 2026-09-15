@@ -16,8 +16,8 @@ export default function PrivacidadPage() {
             Aviso Legal
           </a>
           . Para cualquier cuestión sobre esta política puedes escribir a{" "}
-          <a href="mailto:privacidad@tuprofesorparticular.com" className="text-teal-600 hover:underline">
-            privacidad@tuprofesorparticular.com
+          <a href="mailto:contacto@tuprofesorparticular.es" className="text-teal-600 hover:underline">
+            contacto@tuprofesorparticular.es
           </a>
           .
         </p>
@@ -126,8 +126,8 @@ export default function PrivacidadPage() {
           Puedes ejercer en cualquier momento tus derechos de acceso,
           rectificación, supresión, oposición, limitación del tratamiento y
           portabilidad escribiendo a{" "}
-          <a href="mailto:privacidad@tuprofesorparticular.com" className="text-teal-600 hover:underline">
-            privacidad@tuprofesorparticular.com
+          <a href="mailto:contacto@tuprofesorparticular.es" className="text-teal-600 hover:underline">
+            contacto@tuprofesorparticular.es
           </a>
           . También puedes editar o eliminar directamente buena parte de tu
           información desde tu panel de usuario. Si consideras que no hemos

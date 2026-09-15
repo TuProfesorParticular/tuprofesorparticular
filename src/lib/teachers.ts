@@ -1,4 +1,4 @@
-import type { Level, Modality } from "@prisma/client";
+import type { Level, Modality, Vertical } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { PLAN_PRIORITY } from "@/lib/plans";
 
@@ -94,9 +94,9 @@ const FEATURED_ROTATION_MS = 1000 * 60 * 60 * 6; // la selección se renueva cad
 
 // Profesores destacados para la portada: los mejor valorados, con una selección
 // que rota cada pocas horas en vez de mostrar siempre exactamente los mismos.
-export async function getFeaturedTeachers(limit = 3) {
+export async function getFeaturedTeachers(limit = 3, vertical?: Vertical) {
   const teachers = await prisma.teacherProfile.findMany({
-    where: { status: "approved" },
+    where: { status: "approved", ...(vertical ? { vertical } : {}) },
     include: {
       user: { select: { name: true, avatarUrl: true } },
       subjects: { include: { subject: true } },

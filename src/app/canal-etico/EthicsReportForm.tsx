@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import HoneypotFields from "@/components/HoneypotFields";
 import { submitEthicsReport, type EthicsReportState } from "./actions";
 
 const initialState: EthicsReportState = {};
@@ -28,6 +29,7 @@ export default function EthicsReportForm({
 
   return (
     <form action={formAction} className="rounded-xl border border-stone-200 bg-white p-6 shadow-sm">
+      <HoneypotFields />
       {teacherProfileId && (
         <input type="hidden" name="teacherProfileId" value={teacherProfileId} />
       )}
