@@ -34,7 +34,10 @@ jobs:
             exit 1
           fi
           FILENAME="backup-$(date -u +%Y-%m-%d).sql.gz"
-          pg_dump "$DATABASE_URL" | gzip > "$FILENAME"
+          # El runner ya trae un pg_dump 16 preinstalado en /usr/bin, que no
+          # cede el paso al 17 recién instalado — llamamos al binario
+          # correcto por su ruta completa para no depender del PATH.
+          /usr/lib/postgresql/17/bin/pg_dump "$DATABASE_URL" | gzip > "$FILENAME"
           echo "FILENAME=$FILENAME" >> "$GITHUB_ENV"
 
       - name: Subir la copia como artefacto
