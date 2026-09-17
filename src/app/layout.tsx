@@ -3,6 +3,7 @@ import { Plus_Jakarta_Sans, Geist_Mono } from "next/font/google";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import CookieNotice from "@/components/CookieNotice";
+import AdSenseLoader from "@/components/AdSenseLoader";
 import Analytics from "@/components/Analytics";
 import "./globals.css";
 
@@ -50,13 +51,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(ORGANIZATION_JSON_LD) }}
         />
-        {ADSENSE_CLIENT_ID && (
-          <script
-            async
-            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT_ID}`}
-            crossOrigin="anonymous"
-          />
-        )}
+        {ADSENSE_CLIENT_ID && <AdSenseLoader clientId={ADSENSE_CLIENT_ID} />}
         <Navbar />
         <div className="flex-1">{children}</div>
         <Footer />
