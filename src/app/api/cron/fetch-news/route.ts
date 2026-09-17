@@ -8,7 +8,13 @@ const MAX_ITEMS_PER_SOURCE = 15;
 // reciente, no un archivo histórico.
 const RETENTION_DAYS = 30;
 
-const parser = new Parser({ timeout: 15000 });
+// Algunos medios (ej. Mundo Deportivo, AS) rechazan peticiones sin
+// User-Agent de navegador — con uno genérico basta, no hace falta simular
+// nada más elaborado.
+const parser = new Parser({
+  timeout: 15000,
+  headers: { "User-Agent": "Mozilla/5.0 (compatible; TuProfesorParticularBot/1.0)" },
+});
 
 // Muchos feeds no traen la imagen en el campo "enclosure" — como último
 // recurso buscamos la primera <img> dentro del HTML del contenido.

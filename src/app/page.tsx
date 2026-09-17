@@ -14,6 +14,7 @@ import Testimonials from "@/components/Testimonials";
 import FeaturedTeachers from "@/components/FeaturedTeachers";
 import HeroPhotos from "@/components/HeroPhotos";
 import MaterialesSpotlight from "@/components/MaterialesSpotlight";
+import NoticiasSpotlight from "@/components/NoticiasSpotlight";
 
 type SearchParams = {
   ambito?: string;
@@ -189,6 +190,8 @@ export default async function HomePage({
         </section>
 
         <MaterialesSpotlight vertical={activeVertical} />
+
+        <NoticiasSpotlight vertical={activeVertical} />
 
         <FeaturedTeachers vertical={activeVertical} />
 
