@@ -581,6 +581,11 @@ model InstitutionContact {
   unsubscribed Boolean       @default(false)
   createdAt    DateTime      @default(now())
 
+  // Cuándo se le envió el aviso general de la plataforma (no el envío de CV
+  // de un profesor concreto) — para no volver a escribirle si ya se le
+  // avisó una vez (ver sendPlatformOutreachEmail).
+  outreachSentAt DateTime?
+
   @@index([vertical, region, active, unsubscribed])
   @@map("institution_contacts")
 }

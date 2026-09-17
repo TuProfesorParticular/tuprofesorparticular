@@ -23,6 +23,10 @@ export type InstitutionCopy = {
   // Copy del email que reciben los centros
   emailSubjectRole: string;
   emailIntroRole: string;
+  // Copy del aviso general de la plataforma (no ligado a un profesor
+  // concreto) — ver sendPlatformOutreachEmail.
+  outreachSubject: string;
+  outreachBody: string;
 };
 
 export const INSTITUTION_COPY: Record<Vertical, InstitutionCopy> = {
@@ -38,6 +42,9 @@ export const INSTITUTION_COPY: Record<Vertical, InstitutionCopy> = {
       "Llega a centros educativos sin pasarte semanas buscando correos y formularios.",
     emailSubjectRole: "Candidatura docente",
     emailIntroRole: "incorporarse a su equipo docente",
+    outreachSubject: "Profesores particulares — TuProfesorParticular",
+    outreachBody:
+      "Le escribimos desde TuProfesorParticular, una plataforma donde profesores particulares publican su anuncio gratis y contactan directamente con alumnos, sin intermediarios ni comisiones sobre las clases habituales. Si en su centro hay docentes que compaginan la enseñanza con clases particulares, o quiere dar a conocer esta opción entre las familias, puede interesarles.",
   },
   deporte: {
     icon: "🏋️",
@@ -51,6 +58,9 @@ export const INSTITUTION_COPY: Record<Vertical, InstitutionCopy> = {
       "Llega a centros deportivos sin pasarte semanas buscando correos y formularios.",
     emailSubjectRole: "Candidatura como entrenador/a",
     emailIntroRole: "incorporarse a su equipo",
+    outreachSubject: "Entrenadores personales — TuProfesorParticular",
+    outreachBody:
+      "Le escribimos desde TuProfesorParticular, una plataforma donde entrenadores personales publican su anuncio gratis y contactan directamente con nuevos clientes. Si en su centro hay entrenadores que buscan ampliar su cartera de clientes de forma independiente, puede interesarles conocernos.",
   },
   salud_mental: {
     icon: "🏥",
@@ -64,6 +74,9 @@ export const INSTITUTION_COPY: Record<Vertical, InstitutionCopy> = {
       "Llega a centros de salud mental sin pasarte semanas buscando correos y formularios.",
     emailSubjectRole: "Candidatura profesional",
     emailIntroRole: "incorporarse a su equipo de profesionales",
+    outreachSubject: "Psicólogos y terapeutas — TuProfesorParticular",
+    outreachBody:
+      "Le escribimos desde TuProfesorParticular, una plataforma donde psicólogos y terapeutas publican su anuncio gratis y contactan directamente con pacientes. Si en su centro hay profesionales que buscan ampliar su consulta privada de forma independiente, puede interesarles conocernos.",
   },
 };
 

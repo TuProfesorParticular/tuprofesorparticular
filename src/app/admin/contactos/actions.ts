@@ -5,7 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/auth-helpers";
 import { REGION_LABELS } from "@/lib/regions";
 import { isVertical } from "@/lib/institutions";
-import type { SpanishRegion } from "@prisma/client";
+import { sendPlatformOutreachEmail } from "@/lib/mailer";
+import type { SpanishRegion, Vertical } from "@prisma/client";
 
 function isSpanishRegion(value: string): value is SpanishRegion {
   return value in REGION_LABELS;
@@ -96,6 +97,39 @@ export async function deleteInstitutionContact(formData: FormData) {
 
   const id = String(formData.get("id") || "");
   await prisma.institutionContact.delete({ where: { id } });
+
+  revalidatePath("/admin/contactos");
+}
+
+// Aviso general de la plataforma (no ligado a ningún profesor) a todos los
+// centros de esta región que todavía no lo hayan recibido — para no
+// escribirle dos veces al mismo centro si se pulsa varias veces.
+export async function sendPlatformOutreachToRegion(formData: FormData) {
+  await requireRole("admin");
+
+  const vertical = String(formData.get("vertical") || "");
+  const region = String(formData.get("region") || "");
+  if (!isVertical(vertical) || !isSpanishRegion(region)) return;
+
+  const contacts = await prisma.institutionContact.findMany({
+    where: {
+      vertical: vertical as Vertical,
+      region: region as SpanishRegion,
+      active: true,
+      unsubscribed: false,
+      outreachSentAt: null,
+    },
+    select: { id: true, email: true },
+  });
+
+  if (contacts.length > 0) {
+    await sendPlatformOutreachEmail({ vertical: vertical as Vertical, institutions: contacts });
+
+    await prisma.institutionContact.updateMany({
+      where: { id: { in: contacts.map((c) => c.id) } },
+      data: { outreachSentAt: new Date() },
+    });
+  }
 
   revalidatePath("/admin/contactos");
 }

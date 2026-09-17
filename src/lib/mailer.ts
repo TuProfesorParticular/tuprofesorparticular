@@ -611,3 +611,68 @@ export async function sendCvToInstitutions(params: {
 
   return { sent, failed };
 }
+
+// Aviso general de la plataforma a una lista de centros — a diferencia de
+// sendCvToInstitutions, no va ligado al CV de ningún profesional concreto:
+// es la plataforma presentándose, para que el centro informe a su plantilla.
+// Mismas reglas LSSICE (identificación clara + baja) que el envío de CV.
+export async function sendPlatformOutreachEmail(params: {
+  vertical: Vertical;
+  institutions: { id: string; email: string }[];
+}): Promise<{ sent: number; failed: number }> {
+  const { vertical, institutions } = params;
+  const copy = INSTITUTION_COPY[vertical];
+
+  if (!resend) {
+    console.log(
+      `[mailer] RESEND_API_KEY no configurada. Aviso simulado a ${institutions.length} ${copy.pluralLower}.`,
+    );
+    return { sent: institutions.length, failed: 0 };
+  }
+
+  const buildHtml = (institutionId: string) => renderEmailShell(`
+    <p style="margin:0 0 16px;color:#57534e;">Buenos días,</p>
+    <p style="margin:0 0 16px;color:#57534e;">${toSafeHtml(copy.outreachBody)}</p>
+    <div style="text-align:center;margin:24px 0;">
+      ${emailButton(`${APP_URL}/para-profesores`, "Conocer TuProfesorParticular")}
+    </div>
+    <p style="margin:16px 0 0;color:#57534e;">
+      Puede reenviar este correo a quien considere en su equipo, o responder
+      directamente si tiene cualquier pregunta.
+    </p>
+    <hr style="border:none;border-top:1px solid #e7e5e4;margin:24px 0;"/>
+    <p style="color:#a8a29e;font-size:12px;">
+      Este correo se lo envía TuProfesorParticular directamente, como
+      presentación de la plataforma a centros del sector. Si no desea
+      recibir más comunicaciones de este tipo, escríbanos a
+      contacto@tuprofesorparticular.es indicando el nombre de su centro y no
+      volveremos a escribirle (ref: ${institutionId}).
+    </p>
+  `);
+
+  let sent = 0;
+  let failed = 0;
+
+  for (let i = 0; i < institutions.length; i += RESEND_BATCH_SIZE) {
+    const batch = institutions.slice(i, i + RESEND_BATCH_SIZE);
+    try {
+      const { error } = await resend.batch.send(
+        batch.map((institution) => ({
+          from: FROM,
+          to: institution.email,
+          subject: copy.outreachSubject,
+          html: buildHtml(institution.id),
+        })),
+      );
+      if (error) {
+        failed += batch.length;
+      } else {
+        sent += batch.length;
+      }
+    } catch {
+      failed += batch.length;
+    }
+  }
+
+  return { sent, failed };
+}

@@ -100,6 +100,12 @@ export default function EditProfileForm({
         <label htmlFor="bio" className="block text-sm font-medium text-stone-700">
           Presentación
         </label>
+        <p className="mt-0.5 text-xs text-stone-400">
+          Cuéntanos tu estilo y experiencia. Las materias que impartes se
+          seleccionan abajo, en &ldquo;Materias&rdquo; — no hace falta
+          repetirlas aquí, y solo apareces en las búsquedas de las materias
+          que tengas seleccionadas allí, no de las que menciones en el texto.
+        </p>
         <textarea
           id="bio"
           name="bio"

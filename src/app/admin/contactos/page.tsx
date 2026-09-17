@@ -13,6 +13,7 @@ import {
   toggleInstitutionContactUnsubscribed,
   deleteInstitutionContact,
 } from "./actions";
+import SendOutreachButton from "./SendOutreachButton";
 
 export const metadata: Metadata = {
   title: "Centros · TuProfesorParticular",
@@ -30,7 +31,7 @@ export default async function AdminContactosPage({
     selectedRegionRaw && selectedRegionRaw in REGION_LABELS ? selectedRegionRaw : null;
   const copy = INSTITUTION_COPY[vertical];
 
-  const [counts, contacts] = await Promise.all([
+  const [counts, contacts, pendingOutreachCount] = await Promise.all([
     prisma.institutionContact.groupBy({
       by: ["region"],
       where: { vertical, active: true, unsubscribed: false },
@@ -43,6 +44,17 @@ export default async function AdminContactosPage({
           take: 200,
         })
       : Promise.resolve([]),
+    selectedRegion
+      ? prisma.institutionContact.count({
+          where: {
+            vertical,
+            region: selectedRegion as (typeof REGION_ORDER)[number],
+            active: true,
+            unsubscribed: false,
+            outreachSentAt: null,
+          },
+        })
+      : Promise.resolve(0),
   ]);
 
   const countByRegion = new Map(counts.map((c) => [c.region, c._count._all]));
@@ -99,7 +111,25 @@ export default async function AdminContactosPage({
 
       {selectedRegion && (
         <>
-          <section className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2">
+          <section className="mt-8 rounded-xl border border-amber-200 bg-amber-50/40 p-4">
+            <h2 className="text-sm font-semibold text-stone-900">
+              Aviso general de la plataforma
+            </h2>
+            <p className="mt-1 text-xs text-stone-500">
+              Un correo de presentación de TuProfesorParticular (no ligado a
+              ningún profesor concreto) para que el centro informe a su
+              plantilla. Cada centro solo lo recibe una vez.
+            </p>
+            <div className="mt-3">
+              <SendOutreachButton
+                vertical={vertical}
+                region={selectedRegion}
+                count={pendingOutreachCount}
+              />
+            </div>
+          </section>
+
+          <section className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
             <div className="rounded-xl border border-stone-200 bg-white p-4">
               <h2 className="text-sm font-semibold text-stone-900">
                 Añadir un {copy.singularLower} — {REGION_LABELS[selectedRegion as (typeof REGION_ORDER)[number]]}
