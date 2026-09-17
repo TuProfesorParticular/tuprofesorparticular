@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import type { Vertical } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { generateToken } from "@/lib/tokens";
-import { sendVerificationEmail } from "@/lib/mailer";
+import { sendVerificationEmail, sendNewTeacherRegisteredEmail } from "@/lib/mailer";
 import { FOUNDER_LIMIT, addFounderTrialMonths } from "@/lib/plans";
 import { VERTICALS, DEFAULT_VERTICAL } from "@/lib/constants";
 import { isLikelyBot } from "@/lib/antispam";
@@ -114,6 +114,18 @@ export async function registerUser(
         : {}),
     },
   });
+
+  if (role === "teacher") {
+    try {
+      await sendNewTeacherRegisteredEmail({
+        name,
+        email,
+        verticalLabel: VERTICALS.find((v) => v.slug === vertical)?.label ?? vertical,
+      });
+    } catch {
+      // Best-effort: el registro ya se ha completado aunque falle este aviso.
+    }
+  }
 
   const token = generateToken();
   await prisma.verificationToken.create({

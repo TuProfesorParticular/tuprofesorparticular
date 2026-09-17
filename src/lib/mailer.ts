@@ -395,6 +395,27 @@ const SUGGESTION_CATEGORY_LABELS: Record<string, string> = {
   otro: "📝 Otro",
 };
 
+// Aviso al administrador cada vez que se registra un profesor nuevo (su
+// anuncio queda "pending" hasta que se revise y apruebe en /admin).
+export function sendNewTeacherRegisteredEmail(params: {
+  name: string;
+  email: string;
+  verticalLabel: string;
+}) {
+  const { name, email, verticalLabel } = params;
+  return sendEmail(
+    ADMIN_EMAIL,
+    `Nuevo profesor registrado — ${name}`,
+    `<p style="margin:0 0 4px;font-size:16px;font-weight:700;color:#1c1917;">🧑‍🏫 Nuevo profesor registrado</p>
+     <p style="margin:0 0 20px;color:#57534e;">
+       <strong>${toSafeHtml(name)}</strong> (${email}) se acaba de registrar en
+       <strong>${toSafeHtml(verticalLabel)}</strong>. Su anuncio está pendiente
+       de aprobación.
+     </p>
+     <div style="text-align:center;">${emailButton(`${APP_URL}/admin`, "Revisar en administración")}</div>`,
+  );
+}
+
 // Aviso al administrador cuando se registra un error en producción (ver
 // instrumentation.ts) — antes solo se veía entrando a revisar /admin.
 export function sendErrorAlertEmail(params: { message: string; path: string }) {
