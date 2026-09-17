@@ -642,3 +642,21 @@ model CvCampaign {
   @@index([userId])
   @@map("cv_campaigns")
 }
+
+// Titulares importados de medios externos (ver /api/cron/fetch-news y
+// NEWS_SOURCES) para la sección "Noticias" — cada uno enlaza al artículo
+// original, nunca reproducimos el contenido completo de otro medio.
+model NewsItem {
+  id          String   @id @default(cuid())
+  vertical    Vertical
+  sourceName  String
+  title       String
+  link        String   @unique
+  summary     String?
+  imageUrl    String?
+  publishedAt DateTime
+  createdAt   DateTime @default(now())
+
+  @@index([vertical, publishedAt])
+  @@map("news_items")
+}

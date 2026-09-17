@@ -17,6 +17,9 @@ const geistMono = Geist_Mono({
 });
 
 const APP_URL = process.env.APP_URL || "https://tuprofesorparticular.es";
+// No configurado hasta que se apruebe la cuenta de Google AdSense — con la
+// variable vacía, AdSlot no renderiza nada y este script ni se carga.
+const ADSENSE_CLIENT_ID = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID;
 
 export const metadata: Metadata = {
   metadataBase: new URL(APP_URL),
@@ -47,6 +50,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(ORGANIZATION_JSON_LD) }}
         />
+        {ADSENSE_CLIENT_ID && (
+          <script
+            async
+            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT_ID}`}
+            crossOrigin="anonymous"
+          />
+        )}
         <Navbar />
         <div className="flex-1">{children}</div>
         <Footer />

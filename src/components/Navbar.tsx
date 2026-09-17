@@ -41,6 +41,9 @@ export default async function Navbar() {
           <Link href="/materiales" className="text-stone-600 hover:text-stone-900">
             Materiales
           </Link>
+          <Link href="/noticias" className="text-stone-600 hover:text-stone-900">
+            Noticias
+          </Link>
           <Link
             href="/preguntas-frecuentes"
             className="text-stone-600 hover:text-stone-900"

@@ -63,6 +63,13 @@ export default function MobileMenu({ isLoggedIn }: { isLoggedIn: boolean }) {
               Materiales
             </Link>
             <Link
+              href="/noticias"
+              onClick={close}
+              className="rounded-lg px-3 py-2 text-stone-600 hover:bg-stone-50 hover:text-stone-900"
+            >
+              Noticias
+            </Link>
+            <Link
               href="/preguntas-frecuentes"
               onClick={close}
               className="rounded-lg px-3 py-2 text-stone-600 hover:bg-stone-50 hover:text-stone-900"

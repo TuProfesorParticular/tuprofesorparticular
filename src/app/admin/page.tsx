@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { getEthicsReports } from "@/lib/ethics";
 import { getSuggestions } from "@/lib/suggestions";
 import { LEVEL_LABELS, MODALITY_LABELS } from "@/lib/constants";
+import { getPlan } from "@/lib/plans";
 import {
   setTeacherProfileStatus,
   toggleUserStatus,
@@ -30,6 +31,12 @@ const REPORT_STATUS_STYLES = {
   open: "bg-red-50 text-red-700",
   reviewed: "bg-amber-50 text-amber-700",
   closed: "bg-stone-100 text-stone-500",
+};
+
+const PLAN_BADGE_STYLES = {
+  free: "bg-stone-100 text-stone-500",
+  pro: "bg-amber-50 text-amber-700",
+  premium: "bg-violet-50 text-violet-700",
 };
 
 const SUGGESTION_CATEGORY_LABELS = {
@@ -135,9 +142,16 @@ export default async function AdminPage() {
               >
                 <div className="min-w-0">
                   <p className="font-medium text-stone-900">
-                    {profile.user.name}{" "}
+                    <Link href={`/profesores/${profile.id}`} target="_blank" className="hover:underline">
+                      {profile.user.name}
+                    </Link>{" "}
                     <span className="font-normal text-stone-400">
                       · {profile.user.email}
+                    </span>{" "}
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${PLAN_BADGE_STYLES[profile.plan]}`}
+                    >
+                      {getPlan(profile.plan).name}
                     </span>
                   </p>
                   <p className="truncate text-sm text-stone-500">
@@ -145,6 +159,13 @@ export default async function AdminPage() {
                   </p>
                 </div>
                 <div className="flex flex-shrink-0 gap-2">
+                  <Link
+                    href={`/profesores/${profile.id}`}
+                    target="_blank"
+                    className="self-center rounded-lg border border-stone-300 px-3 py-1.5 text-sm font-medium text-stone-600 hover:bg-stone-50"
+                  >
+                    Ver anuncio
+                  </Link>
                   <form action={setTeacherProfileStatus}>
                     <input type="hidden" name="teacherProfileId" value={profile.id} />
                     <input type="hidden" name="status" value="approved" />
@@ -193,9 +214,16 @@ export default async function AdminPage() {
               >
                 <div className="min-w-0">
                   <p className="font-medium text-stone-900">
-                    {profile.user.name}{" "}
+                    <Link href={`/profesores/${profile.id}`} target="_blank" className="hover:underline">
+                      {profile.user.name}
+                    </Link>{" "}
                     <span className="font-normal text-stone-400">
                       · {profile.user.email}
+                    </span>{" "}
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${PLAN_BADGE_STYLES[profile.plan]}`}
+                    >
+                      {getPlan(profile.plan).name}
                     </span>
                   </p>
                   <p className="truncate text-sm text-stone-500">
@@ -203,6 +231,13 @@ export default async function AdminPage() {
                   </p>
                 </div>
                 <div className="flex flex-shrink-0 items-center gap-3">
+                  <Link
+                    href={`/profesores/${profile.id}`}
+                    target="_blank"
+                    className="rounded-lg border border-stone-300 px-3 py-1.5 text-sm font-medium text-stone-600 hover:bg-stone-50"
+                  >
+                    Ver anuncio
+                  </Link>
                   <span
                     className={`rounded-full px-2.5 py-1 text-xs font-medium ${
                       profile.status === "approved"

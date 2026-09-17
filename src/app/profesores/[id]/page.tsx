@@ -58,11 +58,15 @@ export default async function TeacherProfilePage({ params, searchParams }: PageP
     auth(),
   ]);
 
-  if (!teacher || teacher.status !== "approved") {
+  const isOwnProfile = Boolean(teacher && session?.user?.id === teacher.userId);
+  const isAdmin = session?.user?.role === "admin";
+
+  // Un anuncio no publicado (pendiente o despublicado) solo lo puede ver su
+  // propio dueño (para previsualizarlo) o un administrador (para revisarlo
+  // antes de aprobarlo) — para cualquier otra persona, como si no existiera.
+  if (!teacher || (teacher.status !== "approved" && !isOwnProfile && !isAdmin)) {
     notFound();
   }
-
-  const isOwnProfile = session?.user?.id === teacher.userId;
 
   const [existingBooking, { reviews, average, count }] = await Promise.all([
     session?.user && !isOwnProfile

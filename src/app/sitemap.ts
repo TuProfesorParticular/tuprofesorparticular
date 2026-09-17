@@ -11,6 +11,7 @@ const STATIC_ROUTES = [
   "/universidad",
   "/para-profesores",
   "/oportunidades",
+  "/noticias",
   "/registro",
   "/iniciar-sesion",
   "/canal-etico",
