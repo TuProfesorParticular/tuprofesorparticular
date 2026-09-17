@@ -395,6 +395,35 @@ const SUGGESTION_CATEGORY_LABELS: Record<string, string> = {
   otro: "📝 Otro",
 };
 
+// Avisa al profesor cuando el administrador aprueba su anuncio por primera
+// vez (ver setTeacherProfileStatus) — hasta ahora se enteraba solo si
+// volvía a entrar al panel a comprobarlo.
+export function sendProfileApprovedEmail(params: {
+  teacherName: string;
+  teacherEmail: string;
+  teacherProfileId: string;
+}) {
+  const { teacherName, teacherEmail, teacherProfileId } = params;
+  const profileUrl = `${APP_URL}/profesores/${teacherProfileId}`;
+  const firstName = teacherName.split(" ")[0];
+
+  return sendEmail(
+    teacherEmail,
+    "¡Tu anuncio ya está publicado! — TuProfesorParticular",
+    `<p style="margin:0 0 4px;font-size:16px;font-weight:700;color:#1c1917;">🎉 ¡Enhorabuena, ${toSafeHtml(firstName)}!</p>
+     <p style="margin:0 0 20px;color:#57534e;">
+       Hemos revisado tu anuncio y ya está publicado. A partir de ahora
+       apareces en las búsquedas y los alumnos pueden contactarte.
+     </p>
+     <div style="text-align:center;">${emailButton(profileUrl, "Ver mi anuncio publicado")}</div>
+     <p style="margin:28px 0 0;color:#a8a29e;font-size:12px;">
+       Consejo: si todavía no has conectado tu cuenta de cobro, hazlo desde
+       <a href="${APP_URL}/panel/pagos" style="color:#a8a29e;">Cobros</a> para
+       poder recibir el pago de tu primera clase con cada alumno nuevo.
+     </p>`,
+  );
+}
+
 // Aviso al administrador cada vez que se registra un profesor nuevo (su
 // anuncio queda "pending" hasta que se revise y apruebe en /admin).
 export function sendNewTeacherRegisteredEmail(params: {

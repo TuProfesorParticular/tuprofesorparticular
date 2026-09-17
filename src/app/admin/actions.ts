@@ -4,7 +4,11 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/auth-helpers";
 import { requireStripe } from "@/lib/stripe";
-import { sendRefundResolvedEmail, sendReferralRewardEmail } from "@/lib/mailer";
+import {
+  sendRefundResolvedEmail,
+  sendReferralRewardEmail,
+  sendProfileApprovedEmail,
+} from "@/lib/mailer";
 import { REFERRAL_REWARD_DAYS } from "@/lib/plans";
 
 export async function setTeacherProfileStatus(formData: FormData) {
@@ -15,6 +19,15 @@ export async function setTeacherProfileStatus(formData: FormData) {
 
   if (status !== "approved" && status !== "rejected") return;
 
+  // Para saber si esto es una aprobación de verdad (pending/rejected →
+  // approved) y no un simple "despublicar y volver a publicar" de un
+  // anuncio que ya estaba aprobado — solo en el primer caso avisamos por
+  // email al profesor.
+  const previous = await prisma.teacherProfile.findUnique({
+    where: { id: teacherProfileId },
+    select: { status: true, user: { select: { name: true, email: true } } },
+  });
+
   await prisma.teacherProfile.update({
     where: { id: teacherProfileId },
     data: { status },
@@ -22,6 +35,18 @@ export async function setTeacherProfileStatus(formData: FormData) {
 
   if (status === "approved") {
     await grantReferralRewardIfDue(teacherProfileId);
+
+    if (previous && previous.status !== "approved") {
+      try {
+        await sendProfileApprovedEmail({
+          teacherName: previous.user.name,
+          teacherEmail: previous.user.email,
+          teacherProfileId,
+        });
+      } catch {
+        // Best-effort: el anuncio ya ha quedado aprobado aunque falle el email.
+      }
+    }
   }
 
   revalidatePath("/admin");
