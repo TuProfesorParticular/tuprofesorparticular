@@ -35,11 +35,6 @@ export const NEWS_SOURCES: { vertical: Vertical; name: string; feedUrl: string }
     feedUrl: "https://www.mundodeportivo.com/rss/home.xml",
   },
   {
-    vertical: "deporte",
-    name: "Diario AS",
-    feedUrl: "https://as.com/rss/tags/ultimas_noticias.xml",
-  },
-  {
     vertical: "salud_mental",
     name: "Psicología y Mente",
     feedUrl: "https://www.psicologiaymente.com/feed",

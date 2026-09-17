@@ -11,16 +11,37 @@ const RETENTION_DAYS = 30;
 // Algunos medios (ej. Mundo Deportivo, AS) rechazan peticiones sin
 // User-Agent de navegador — con uno genérico basta, no hace falta simular
 // nada más elaborado.
-const parser = new Parser({
+type MediaField = { $?: { url?: string } } | { $?: { url?: string } }[] | undefined;
+type RawItem = Parser.Item & {
+  content?: string;
+  summary?: string;
+  "media:content"?: MediaField;
+  "media:thumbnail"?: MediaField;
+};
+
+const parser = new Parser<unknown, RawItem>({
   timeout: 15000,
   headers: { "User-Agent": "Mozilla/5.0 (compatible; TuProfesorParticularBot/1.0)" },
+  // Muchos medios ponen la foto de portada en media:content/media:thumbnail
+  // (un estándar aparte de RSS) en vez de en "enclosure".
+  customFields: { item: ["media:content", "media:thumbnail"] },
 });
 
-// Muchos feeds no traen la imagen en el campo "enclosure" — como último
-// recurso buscamos la primera <img> dentro del HTML del contenido.
-function extractImage(item: Parser.Item & { content?: string }): string | null {
+function firstMediaUrl(field: MediaField): string | null {
+  if (!field) return null;
+  const entry = Array.isArray(field) ? field[0] : field;
+  return entry?.$?.url ?? null;
+}
+
+// Última red antes de dar el artículo por "sin imagen": si ni el enclosure
+// ni media:content/thumbnail traen nada, buscamos la primera <img> dentro
+// del HTML del contenido o del resumen.
+function extractImage(item: RawItem): string | null {
   if (item.enclosure?.url) return item.enclosure.url;
-  const match = item.content?.match(/<img[^>]+src="([^"]+)"/i);
+  const media = firstMediaUrl(item["media:content"]) ?? firstMediaUrl(item["media:thumbnail"]);
+  if (media) return media;
+  const html = [item.content, item.summary].filter(Boolean).join(" ");
+  const match = html.match(/<img[^>]+src=["']([^"']+)["']/i);
   return match?.[1] ?? null;
 }
 
